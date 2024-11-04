@@ -1,0 +1,12 @@
+db\cn.class
+com\devconta\gestioninventariopeps\resources\JakartaEE8Resource.class
+modelos\Lote_inventario.class
+modelos\Movimientos_inventario.class
+modelos\Ventas.class
+modelos\Productos.class
+modelos\Lotes.class
+modelos\Compras.class
+modelosDAO\ProductosDAO.class
+com\devconta\gestioninventariopeps\JakartaRestConfiguration.class
+modelos\Reportes_inventario.class
+modelos\Devoluciones.class
