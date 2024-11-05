@@ -1,36 +1,32 @@
 package modelos;
 
-import java.sql.Date;
-
 public class Productos {
 
     private int id_producto;
     private String nombre, descripcion, proveedor;
     private double precio;
-    private Date fecha_registro;
+
     private String estado;
 
     public Productos() {
     }
+    public Productos(String nombre, String descripcion, String proveedor, double precio, String estado) {
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+        this.proveedor = proveedor;
+        this.precio = precio;
+        this.estado = estado;
+    }
 
-    public Productos(int id_producto, String nombre, String descripcion, String proveedor, double precio, Date fecha_registro, String estado) {
+    public Productos(int id_producto, String nombre, String descripcion, String proveedor, double precio, String estado) {
         this.id_producto = id_producto;
         this.nombre = nombre;
         this.descripcion = descripcion;
         this.proveedor = proveedor;
         this.precio = precio;
-        this.fecha_registro = fecha_registro;
         this.estado = estado;
     }
-
-    public Productos(String nombre, String descripcion, String proveedor, double precio, Date fecha_registro, String estado) {
-        this.nombre = nombre;
-        this.descripcion = descripcion;
-        this.proveedor = proveedor;
-        this.precio = precio;
-        this.fecha_registro = fecha_registro;
-        this.estado = estado;
-    }
+    
 
     public int getId_producto() {
         return id_producto;
@@ -71,15 +67,6 @@ public class Productos {
     public void setPrecio(double precio) {
         this.precio = precio;
     }
-
-    public Date getFecha_registro() {
-        return fecha_registro;
-    }
-
-    public void setFecha_registro(Date fecha_registro) {
-        this.fecha_registro = fecha_registro;
-    }
-
     public String getEstado() {
         return estado;
     }

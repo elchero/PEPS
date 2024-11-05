@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import modelos.Compras;
 import modelos.Lotes;
 
@@ -20,7 +22,7 @@ public class ComprasDAO {
 
     // Método para registrar una compra y crear un lote
     public boolean registrarCompraYCrearLote(Compras compra, Lotes lote) {
-        String sqlCompra = "INSERT INTO compras (id_lote, cantidad, costo_total, fecha_compra) VALUES (?, ?, ?, ?)";
+        String sqlCompra = "INSERT INTO compras (id_producto, id_lote, cantidad, costo_total, fecha_compra) VALUES (?, ?, ?, ?, ?)";
         String sqlLote = "INSERT INTO lotes (id_producto, costo_unitario, fecha_ingreso) VALUES (?, ?, ?)";
         String sqlLoteInventario = "INSERT INTO lote_inventario (id_lote, cantidad_total, cantidad_disponible) VALUES (?, ?, ?)";
 
@@ -34,20 +36,21 @@ public class ComprasDAO {
                 psLote.setDate(3, lote.getFecha_ingreso());
                 psLote.executeUpdate();
 
-                ResultSet rs = psLote.getGeneratedKeys();
-                if (rs.next()) {
-                    int idLote = rs.getInt(1);
-                    lote.setId_lote(idLote); // Guardar el id generado
+                ResultSet rsLote = psLote.getGeneratedKeys();
+                if (rsLote.next()) {
+                    int idLote = rsLote.getInt(1);
+                    lote.setId_lote(idLote); // Guardar el ID generado
                     compra.setId_lote(idLote);
                 }
             }
 
             // Insertar la compra
             try (PreparedStatement psCompra = con.prepareStatement(sqlCompra)) {
-                psCompra.setInt(1, compra.getId_lote());
-                psCompra.setInt(2, compra.getCantidad());
-                psCompra.setDouble(3, compra.getCosto_total());
-                psCompra.setDate(4, compra.getFecha_compra());
+                psCompra.setInt(1, compra.getId_producto());
+                psCompra.setInt(2, compra.getId_lote());
+                psCompra.setInt(3, compra.getCantidad());
+                psCompra.setDouble(4, compra.getCosto_total());
+                psCompra.setDate(5, compra.getFecha_compra());
                 psCompra.executeUpdate();
             }
 
@@ -77,5 +80,28 @@ public class ComprasDAO {
                 System.err.println("Error al restablecer auto-commit: " + ex.getMessage());
             }
         }
+    }
+
+    // Método para listar todas las compras
+    public List<Compras> listarCompras() {
+        List<Compras> listaCompras = new ArrayList<>();
+        String sql = "SELECT id_compra, id_producto, id_lote, cantidad, costo_total, fecha_compra FROM compras";
+
+        try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                Compras compra = new Compras(
+                        rs.getInt("id_compra"),
+                        rs.getInt("id_producto"),
+                        rs.getInt("id_lote"),
+                        rs.getInt("cantidad"),
+                        rs.getDouble("costo_total"),
+                        rs.getDate("fecha_compra")
+                );
+                listaCompras.add(compra);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al listar compras: " + e.getMessage());
+        }
+        return listaCompras;
     }
 }

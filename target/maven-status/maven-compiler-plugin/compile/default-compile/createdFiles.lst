@@ -5,8 +5,11 @@ modelos\Movimientos_inventario.class
 modelos\Ventas.class
 modelos\Productos.class
 modelos\Lotes.class
+controladores\ProductosServlet.class
+controladores\ComprasServlet.class
 modelos\Compras.class
 modelosDAO\ProductosDAO.class
 com\devconta\gestioninventariopeps\JakartaRestConfiguration.class
 modelos\Reportes_inventario.class
+modelosDAO\ComprasDAO.class
 modelos\Devoluciones.class
