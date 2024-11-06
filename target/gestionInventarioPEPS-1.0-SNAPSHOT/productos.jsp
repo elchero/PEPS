@@ -33,9 +33,7 @@
                         <th>Nombre</th>
                         <th>Descripción</th>
                         <th>Proveedor</th>
-                        <th>Precio</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
+                        <th>Precio</th>                    
                     </tr>
                 </thead>
                 <tbody>
@@ -46,11 +44,9 @@
                             <td>${producto.descripcion}</td>
                             <td>${producto.proveedor}</td>
                             <td>${producto.precio}</td>
-                            <td>${producto.estado}</td>
                             <td>
                                 <!-- Botón para abrir el modal de edición -->
                                 <button class="btn btn-primary" onclick="editarProducto(${producto.id_producto})">Editar</button>
-                                <a href="ProductosServlet?action=desactivar&id=${producto.id_producto}" class="btn btn-danger">Desactivar</a>
                             </td>
                         </tr>
                     </c:forEach>

@@ -103,14 +103,14 @@ public class ProductosDAO {
     }
 
     public boolean actualizarProducto(Productos producto) {
-        String sql = "UPDATE productos SET nombre = ?, descripcion = ?, proveedor = ?, precio = ?, estado = ? WHERE id_producto = ?";
+        String sql = "UPDATE productos SET nombre = ?, descripcion = ?, proveedor = ?, precio = ? WHERE id_producto = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, producto.getNombre());
             ps.setString(2, producto.getDescripcion());
             ps.setString(3, producto.getProveedor());
             ps.setDouble(4, producto.getPrecio());
-            ps.setString(5, producto.getEstado());
-            ps.setInt(6, producto.getId_producto());
+//            ps.setString(5, producto.getEstado());
+            ps.setInt(5, producto.getId_producto());
             int rowsUpdated = ps.executeUpdate();
             return rowsUpdated > 0;
         } catch (SQLException e) {

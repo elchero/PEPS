@@ -10,6 +10,7 @@ public class Productos {
 
     public Productos() {
     }
+
     public Productos(String nombre, String descripcion, String proveedor, double precio, String estado) {
         this.nombre = nombre;
         this.descripcion = descripcion;
@@ -26,7 +27,14 @@ public class Productos {
         this.precio = precio;
         this.estado = estado;
     }
-    
+
+    public Productos(int id_producto, String nombre, String descripcion, String proveedor, double precio) {
+        this.id_producto = id_producto;
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+        this.proveedor = proveedor;
+        this.precio = precio;
+    }
 
     public int getId_producto() {
         return id_producto;
@@ -67,6 +75,7 @@ public class Productos {
     public void setPrecio(double precio) {
         this.precio = precio;
     }
+
     public String getEstado() {
         return estado;
     }

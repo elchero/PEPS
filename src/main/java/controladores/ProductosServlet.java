@@ -176,9 +176,9 @@ public class ProductosServlet extends HttpServlet {
         String descripcion = request.getParameter("descripcion");
         String proveedor = request.getParameter("proveedor");
         double precio = Double.parseDouble(request.getParameter("precio"));
-        String estado = request.getParameter("estado");
+       // String estado = request.getParameter("estado");
 
-        Productos producto = new Productos(id_producto, nombre, descripcion, proveedor, precio, estado);
+        Productos producto = new Productos(id_producto, nombre, descripcion, proveedor, precio);
         boolean resultado = productosDAO.actualizarProducto(producto);
 
         if (resultado) {
