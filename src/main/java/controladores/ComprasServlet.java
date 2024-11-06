@@ -2,9 +2,6 @@ package controladores;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -13,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import modelos.Compras;
 import modelos.Lotes;
+import modelos.Productos;
 import modelosDAO.ComprasDAO;
 
 @WebServlet(name = "ComprasServlet", urlPatterns = {"/ComprasServlet"})
@@ -115,9 +113,11 @@ public class ComprasServlet extends HttpServlet {
             ComprasDAO comprasDAO = new ComprasDAO();
             List<Compras> listaCompras = comprasDAO.listarCompras();
             List<Lotes> listaLotes = comprasDAO.listarLotes(); // Suponiendo que este método existe
+            List<Productos> listaProductos = comprasDAO.listarProductos();
 
             request.setAttribute("listaCompras", listaCompras);
             request.setAttribute("listaLotes", listaLotes);
+            request.setAttribute("listaProductos", listaProductos);
         } catch (Exception e) {
             System.err.println("Error al listar compras o lotes: " + e.getMessage());
         }

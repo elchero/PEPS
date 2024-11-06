@@ -7,6 +7,7 @@ public class Compras {
     private int id_compra, id_producto, id_lote, cantidad;
     private double costo_total;
     private Timestamp  fecha_compra;
+    private String nombre; //ES el nombre del producto
 
     public Compras() {
     }
@@ -74,6 +75,14 @@ public class Compras {
 
     public void setFecha_compra(Timestamp  fecha_compra) {
         this.fecha_compra = fecha_compra;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
 }

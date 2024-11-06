@@ -7,6 +7,7 @@ public class Lotes {
     private int id_lote, id_producto;
     private double costo_unitario;
     private Timestamp  fecha_ingreso;
+    private String nombre; // Es el nombre del producto
 
     public Lotes() {
     }
@@ -54,6 +55,14 @@ public class Lotes {
 
     public void setFecha_ingreso(Timestamp  fecha_ingreso) {
         this.fecha_ingreso = fecha_ingreso;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
 }

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import modelos.Compras;
 import modelos.Lotes;
+import modelos.Productos;
 
 public class ComprasDAO {
 
@@ -88,7 +89,9 @@ public class ComprasDAO {
     // Método para listar todas las compras
     public List<Compras> listarCompras() {
         List<Compras> listaCompras = new ArrayList<>();
-        String sql = "SELECT id_compra, id_producto, id_lote, cantidad, costo_total, fecha_compra FROM compras";
+        String sql = "SELECT c.id_compra, c.id_producto, p.nombre, c.id_lote, c.cantidad, c.costo_total, c.fecha_compra "
+                + "FROM compras c "
+                + "JOIN productos p ON c.id_producto = p.id_producto";
 
         try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
@@ -100,6 +103,7 @@ public class ComprasDAO {
                         rs.getDouble("costo_total"),
                         rs.getTimestamp("fecha_compra")
                 );
+                compra.setNombre(rs.getString("nombre"));
                 listaCompras.add(compra);
             }
         } catch (SQLException e) {
@@ -110,22 +114,44 @@ public class ComprasDAO {
 
     public List<Lotes> listarLotes() {
         List<Lotes> listaLotes = new ArrayList<>();
-        String sql = "SELECT id_lote, id_producto, costo_unitario, fecha_ingreso FROM lotes";
+        String sql = "SELECT l.id_lote, l.id_producto, p.nombre, l.costo_unitario, l.fecha_ingreso "
+                + "FROM lotes l "
+                + "JOIN productos p ON l.id_producto = p.id_producto";  // Corregí el nombre de la columna en el JOIN
 
         try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
-
             while (rs.next()) {
+                // Crear objeto Lotes
                 Lotes lote = new Lotes();
                 lote.setId_lote(rs.getInt("id_lote"));
                 lote.setId_producto(rs.getInt("id_producto"));
                 lote.setCosto_unitario(rs.getDouble("costo_unitario"));
                 lote.setFecha_ingreso(rs.getTimestamp("fecha_ingreso"));
+                lote.setNombre(rs.getString("nombre"));
+
+                // Agregar el objeto lote a la lista
                 listaLotes.add(lote);
             }
-
         } catch (Exception e) {
             System.err.println("Error al listar lotes: " + e.getMessage());
         }
         return listaLotes;
     }
+
+    public List<Productos> listarProductos() {
+        List<Productos> listaProductos = new ArrayList<>();
+        String sql = "SELECT id_producto, nombre FROM productos";
+
+        try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                Productos producto = new Productos();
+                producto.setId_producto(rs.getInt("id_producto"));
+                producto.setNombre(rs.getString("nombre"));
+                listaProductos.add(producto);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al listar productos: " + e.getMessage());
+        }
+        return listaProductos;
+    }
+
 }
