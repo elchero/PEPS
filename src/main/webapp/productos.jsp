@@ -1,5 +1,4 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="java.util.List" %>
 <%@ page import="modelos.Productos" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html lang="es">
@@ -21,10 +20,10 @@
                 <div class="alert alert-success">${successMessage}</div>
             </c:if>
 
-            <!-- Botón para abrir el formulario de agregar producto -->
-            <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                Agregar Producto
-            </button>
+            <!-- Botón para agregar producto -->
+            <div class="mb-3">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#agregarProductoModal" onclick="limpiarFormulario()">Agregar Producto</button>
+            </div>
 
             <!-- Lista de Productos -->
             <table class="table table-bordered">
@@ -60,39 +59,43 @@
         </div>
 
         <!-- Modal para agregar producto -->
-        <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+        <div id="agregarProductoModal" class="modal fade" tabindex="-1" aria-labelledby="agregarProductoModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addProductModalLabel">Agregar Producto</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <h5 class="modal-title" id="agregarProductoModalLabel">Agregar Producto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="ProductosServlet" method="post">
+                        <form id="formAgregarProducto" action="ProductosServlet" method="post">
                             <input type="hidden" name="action" value="agregar">
+
                             <div class="mb-3">
-                                <label for="nombre" class="form-label">Nombre</label>
+                                <label for="nombre" class="form-label">Nombre:</label>
                                 <input type="text" class="form-control" id="nombre" name="nombre" required>
                             </div>
                             <div class="mb-3">
-                                <label for="descripcion" class="form-label">Descripción</label>
-                                <textarea class="form-control" id="descripcion" name="descripcion" required></textarea>
+                                <label for="descripcion" class="form-label">Descripción:</label>
+                                <input type="text" class="form-control" id="descripcion" name="descripcion" required>
                             </div>
                             <div class="mb-3">
-                                <label for="proveedor" class="form-label">Proveedor</label>
+                                <label for="proveedor" class="form-label">Proveedor:</label>
                                 <input type="text" class="form-control" id="proveedor" name="proveedor" required>
                             </div>
                             <div class="mb-3">
-                                <label for="precio" class="form-label">Precio</label>
+                                <label for="precio" class="form-label">Precio:</label>
                                 <input type="number" step="0.01" class="form-control" id="precio" name="precio" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Agregar Producto</button>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                <button type="submit" class="btn btn-primary">Agregar</button>
+                            </div>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
-
 
         <!-- Modal para editar el producto -->
         <div id="editarProductoModal" class="modal fade" tabindex="-1" aria-labelledby="editarProductoModalLabel" aria-hidden="true">
@@ -103,31 +106,25 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="formEditarProducto" action="ProductosServlet?action=editar" method="post">
+                        <form id="formEditarProducto" action="ProductosServlet" method="post">
                             <input type="hidden" id="id_producto" name="id_producto">
+                            <input type="hidden" name="action" value="editar">
 
                             <div class="mb-3">
                                 <label for="nombre" class="form-label">Nombre:</label>
-                                <input type="text" class="form-control" id="nombre" name="nombre">
+                                <input type="text" class="form-control" id="nombre_editar" name="nombre" required>
                             </div>
                             <div class="mb-3">
                                 <label for="descripcion" class="form-label">Descripción:</label>
-                                <input type="text" class="form-control" id="descripcion" name="descripcion">
+                                <input type="text" class="form-control" id="descripcion_editar" name="descripcion" required>
                             </div>
                             <div class="mb-3">
                                 <label for="proveedor" class="form-label">Proveedor:</label>
-                                <input type="text" class="form-control" id="proveedor" name="proveedor">
+                                <input type="text" class="form-control" id="proveedor_editar" name="proveedor" required>
                             </div>
                             <div class="mb-3">
                                 <label for="precio" class="form-label">Precio:</label>
-                                <input type="number" step="0.01" class="form-control" id="precio" name="precio">
-                            </div>
-                            <div class="mb-3">
-                                <label for="estado" class="form-label">Estado:</label>
-                                <select id="estado" name="estado" class="form-select">
-                                    <option value="activo">Activo</option>
-                                    <option value="inactivo">Inactivo</option>
-                                </select>
+                                <input type="number" step="0.01" class="form-control" id="precio_editar" name="precio" required>
                             </div>
 
                             <div class="modal-footer">
@@ -139,36 +136,39 @@
                 </div>
             </div>
         </div>
+
         <!-- jQuery -->
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <!-- Bootstrap JavaScript -->
+        <!-- Bootstrap JS -->
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
-                                    function editarProducto(id_producto) {
-                                        // Llamada AJAX para obtener datos del producto
-                                        $.ajax({
-                                            url: 'ProductosServlet',
-                                            type: 'GET',
-                                            data: {action: 'obtener', id_producto: id_producto},
-                                            success: function (data) {
-                                                // Rellenar el formulario con los datos obtenidos
-                                                $('#id_producto').val(data.id_producto);
-                                                $('#nombre').val(data.nombre);
-                                                $('#descripcion').val(data.descripcion);
-                                                $('#proveedor').val(data.proveedor);
-                                                $('#precio').val(data.precio);
-                                                $('#estado').val(data.estado);
+            // Función para limpiar el formulario del modal de agregar producto
+            function limpiarFormulario() {
+                // Limpiar todos los campos del formulario
+                $('#formAgregarProducto')[0].reset();
+            }
 
-                                                // Mostrar el modal de edición
-                                                var editarProductoModal = new bootstrap.Modal(document.getElementById('editarProductoModal'));
-                                                editarProductoModal.show();
-                                            },
-                                            error: function () {
-                                                alert('Error al obtener los datos del producto');
-                                            }
-                                        });
-                                    }
-        </script>   
+            // Función para abrir el modal de edición con los datos del producto
+            function editarProducto(idProducto) {
+                $.ajax({
+                    url: 'ProductosServlet', 
+                    type: 'GET',
+                    data: { action: 'obtener', id_producto: idProducto },
+                    success: function (producto) {
+                        // Cargar los datos del producto en el modal de edición
+                        $('#id_producto').val(producto.id_producto);
+                        $('#nombre_editar').val(producto.nombre);
+                        $('#descripcion_editar').val(producto.descripcion);
+                        $('#proveedor_editar').val(producto.proveedor);
+                        $('#precio_editar').val(producto.precio);
+                        $('#editarProductoModal').modal('show');
+                    },
+                    error: function () {
+                        alert('Error al obtener el producto.');
+                    }
+                });
+            }
+        </script>
     </body>
 </html>
