@@ -169,7 +169,6 @@ public class ProductosServlet extends HttpServlet {
         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error en el servidor");
     }
 }
-
     private void editarProducto(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         int id_producto = Integer.parseInt(request.getParameter("id_producto"));

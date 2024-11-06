@@ -152,7 +152,7 @@
             // Función para abrir el modal de edición con los datos del producto
             function editarProducto(idProducto) {
                 $.ajax({
-                    url: 'ProductosServlet',
+                    url: 'ProductosServlet', 
                     type: 'GET',
                     data: { action: 'obtener', id_producto: idProducto },
                     success: function (producto) {
@@ -172,3 +172,4 @@
         </script>
     </body>
 </html>
+
