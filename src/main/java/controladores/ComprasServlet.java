@@ -3,6 +3,9 @@ package controladores;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -53,7 +56,10 @@ public class ComprasServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
+        // processRequest(request, response);
+        listarComprasYLotes(request);
+        // Redirigir al formulario
+        request.getRequestDispatcher("compras.jsp").forward(request, response);
     }
 
     /**
@@ -68,41 +74,53 @@ public class ComprasServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         //processRequest(request, response);
+        String mensaje;
         try {
+            // Obtener los parámetros del formulario
             int idProducto = Integer.parseInt(request.getParameter("id_producto"));
             int cantidad = Integer.parseInt(request.getParameter("cantidad"));
             double costoUnitario = Double.parseDouble(request.getParameter("costo_unitario"));
-            double costoTotal = costoUnitario * cantidad;
-            Date fechaIngreso = Date.valueOf(request.getParameter("fecha_ingreso"));
 
-            if (cantidad <= 0 || costoUnitario <= 0) {
-                request.setAttribute("errorMessage", "La cantidad y el costo unitario deben ser mayores que cero.");
-                request.getRequestDispatcher("compras.jsp").forward(request, response);
-                return;
-            }
-
+            // Crear objetos para compra y lote
             Compras compra = new Compras();
+            compra.setId_producto(idProducto);
             compra.setCantidad(cantidad);
-            compra.setCosto_total(costoTotal);
-            compra.setFecha_compra(fechaIngreso);
+            compra.setCosto_total(cantidad * costoUnitario);
 
-            Lotes lote = new Lotes(idProducto, costoUnitario, fechaIngreso);
+            Lotes lote = new Lotes();
+            lote.setId_producto(idProducto);
+            lote.setCosto_unitario(costoUnitario);
 
-            ComprasDAO dao = new ComprasDAO();
-            boolean success = dao.registrarCompraYCrearLote(compra, lote);
+            // Llamar al DAO para registrar la compra y el lote
+            ComprasDAO comprasDAO = new ComprasDAO();
+            boolean exito = comprasDAO.registrarCompraYCrearLote(compra, lote);
 
-            if (success) {
-                response.sendRedirect("compras.jsp");
-            } else {
-                request.setAttribute("errorMessage", "Ocurrió un error al registrar la compra.");
-                request.getRequestDispatcher("compras.jsp").forward(request, response);
-            }
+            mensaje = exito ? "Compra registrada exitosamente" : "Error al registrar la compra";
+
         } catch (Exception e) {
-            e.printStackTrace();
-            request.setAttribute("errorMessage", "Error en el servidor: " + e.getMessage());
-            request.getRequestDispatcher("compras.jsp").forward(request, response);
+            mensaje = "Error al procesar la solicitud: " + e.getMessage();
         }
 
+        // Actualizar las listas para mostrarlas en la JSP
+        listarComprasYLotes(request);
+        request.setAttribute("mensaje", mensaje);
+
+        // Redirigir a la misma página JSP
+        request.getRequestDispatcher("compras.jsp").forward(request, response);
+    }
+
+    // Método para cargar las listas de compras y lotes
+    private void listarComprasYLotes(HttpServletRequest request) {
+        try {
+            ComprasDAO comprasDAO = new ComprasDAO();
+            List<Compras> listaCompras = comprasDAO.listarCompras();
+            List<Lotes> listaLotes = comprasDAO.listarLotes(); // Suponiendo que este método existe
+
+            request.setAttribute("listaCompras", listaCompras);
+            request.setAttribute("listaLotes", listaLotes);
+        } catch (Exception e) {
+            System.err.println("Error al listar compras o lotes: " + e.getMessage());
+        }
     }
 
     @Override

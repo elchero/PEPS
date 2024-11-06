@@ -29,11 +29,11 @@ public class ComprasDAO {
         try {
             con.setAutoCommit(false);
 
-            // Crear el lote
+            // Crear el lote en 'lotes' y obtener su id
             try (PreparedStatement psLote = con.prepareStatement(sqlLote, Statement.RETURN_GENERATED_KEYS)) {
                 psLote.setInt(1, lote.getId_producto());
                 psLote.setDouble(2, lote.getCosto_unitario());
-                psLote.setDate(3, lote.getFecha_ingreso());
+                psLote.setTimestamp(3, lote.getFecha_ingreso());
                 psLote.executeUpdate();
 
                 ResultSet rsLote = psLote.getGeneratedKeys();
@@ -41,20 +41,22 @@ public class ComprasDAO {
                     int idLote = rsLote.getInt(1);
                     lote.setId_lote(idLote); // Guardar el ID generado
                     compra.setId_lote(idLote);
+                } else {
+                    throw new SQLException("No se pudo obtener el ID del nuevo lote");
                 }
             }
 
-            // Insertar la compra
+            // Registrar la compra en 'compras'
             try (PreparedStatement psCompra = con.prepareStatement(sqlCompra)) {
                 psCompra.setInt(1, compra.getId_producto());
                 psCompra.setInt(2, compra.getId_lote());
                 psCompra.setInt(3, compra.getCantidad());
-                psCompra.setDouble(4, compra.getCosto_total());
-                psCompra.setDate(5, compra.getFecha_compra());
+                psCompra.setDouble(4, compra.getCantidad() * lote.getCosto_unitario()); // Calcular el costo total
+                psCompra.setTimestamp(5, compra.getFecha_compra());
                 psCompra.executeUpdate();
             }
 
-            // Actualizar el lote en el inventario
+            // Insertar o actualizar la información del inventario en 'lote_inventario'
             try (PreparedStatement psLoteInventario = con.prepareStatement(sqlLoteInventario)) {
                 psLoteInventario.setInt(1, lote.getId_lote());
                 psLoteInventario.setInt(2, compra.getCantidad());
@@ -62,6 +64,7 @@ public class ComprasDAO {
                 psLoteInventario.executeUpdate();
             }
 
+            // Confirmar la transacción
             con.commit();
             return true;
 
@@ -95,7 +98,7 @@ public class ComprasDAO {
                         rs.getInt("id_lote"),
                         rs.getInt("cantidad"),
                         rs.getDouble("costo_total"),
-                        rs.getDate("fecha_compra")
+                        rs.getTimestamp("fecha_compra")
                 );
                 listaCompras.add(compra);
             }
@@ -103,5 +106,26 @@ public class ComprasDAO {
             System.err.println("Error al listar compras: " + e.getMessage());
         }
         return listaCompras;
+    }
+
+    public List<Lotes> listarLotes() {
+        List<Lotes> listaLotes = new ArrayList<>();
+        String sql = "SELECT id_lote, id_producto, costo_unitario, fecha_ingreso FROM lotes";
+
+        try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                Lotes lote = new Lotes();
+                lote.setId_lote(rs.getInt("id_lote"));
+                lote.setId_producto(rs.getInt("id_producto"));
+                lote.setCosto_unitario(rs.getDouble("costo_unitario"));
+                lote.setFecha_ingreso(rs.getTimestamp("fecha_ingreso"));
+                listaLotes.add(lote);
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error al listar lotes: " + e.getMessage());
+        }
+        return listaLotes;
     }
 }

@@ -1,17 +1,17 @@
 package modelos;
 
-import java.sql.Date;
+import java.sql.Timestamp ;
 
 public class Compras {
 
     private int id_compra, id_producto, id_lote, cantidad;
     private double costo_total;
-    private Date fecha_compra;
+    private Timestamp  fecha_compra;
 
     public Compras() {
     }
 
-    public Compras(int id_compra, int id_producto, int id_lote, int cantidad, double costo_total, Date fecha_compra) {
+    public Compras(int id_compra, int id_producto, int id_lote, int cantidad, double costo_total, Timestamp  fecha_compra) {
         this.id_compra = id_compra;
         this.id_producto = id_producto;
         this.id_lote = id_lote;
@@ -20,7 +20,7 @@ public class Compras {
         this.fecha_compra = fecha_compra;
     }
 
-    public Compras(int id_producto, int id_lote, int cantidad, double costo_total, Date fecha_compra) {
+    public Compras(int id_producto, int id_lote, int cantidad, double costo_total, Timestamp  fecha_compra) {
         this.id_producto = id_producto;
         this.id_lote = id_lote;
         this.cantidad = cantidad;
@@ -68,11 +68,11 @@ public class Compras {
         this.costo_total = costo_total;
     }
 
-    public Date getFecha_compra() {
+    public Timestamp getFecha_compra() {
         return fecha_compra;
     }
 
-    public void setFecha_compra(Date fecha_compra) {
+    public void setFecha_compra(Timestamp  fecha_compra) {
         this.fecha_compra = fecha_compra;
     }
 
