@@ -31,6 +31,7 @@
 
             <!-- Formulario de Registro de Compra -->
             <form action="ComprasServlet" method="post" class="p-5 border rounded shadow-sm bg-light">
+                <input type="hidden" name="action" value="create">
                 <!-- Selección de Producto -->
                 <div class="row mb-3">
                     <div class="col">
@@ -72,7 +73,7 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="costo_unitario" class="form-label fw-bold">Precio Sin IVA:</label>
-                        <input type="text" id="costo_unitario" name="costo_unitario" class="form-control" disabled>
+                        <input type="text" id="costo_unitario" name="costo_unitario" class="form-control">
                     </div>
                 </div>
 
@@ -96,10 +97,11 @@
                     <tr>
                         <th>ID Compra</th>
                         <th>Producto</th>
-                        <th>ID Lote</th>
+                        <th>ID lote</th>
                         <th>Cantidad</th>
                         <th>Costo Total</th>
-                        <th>Fecha de Compra</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -112,6 +114,17 @@
                             <td>${compra.costo_total}</td>
                             <td>
                                 <fmt:formatDate value="${compra.fecha_compra}" pattern="d'/'MMMM'/'yyyy '-' HH:mm:ss" />
+                            </td>
+                            <td>
+                                <button class="btn btn-warning btn-sm" onclick="cargarCompra('${compra.id_compra}', '${compra.id_producto}', '${compra.cantidad}', '${compra.costo_total}')">
+                                    Editar
+                                </button>
+                                <form method="post" action="ComprasServlet" style="display:inline;">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="id_compra" value="${compra.id_compra}">
+                                    <input type="hidden" name="id_lote" value="${compra.id_lote}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                </form>
                             </td>
                         </tr>
                     </c:forEach>
@@ -142,6 +155,52 @@
                     </c:forEach>
                 </tbody>
             </table>
-        </div>
+            <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post" action="ComprasServlet">
+                            <input type="hidden" name="action" value="update">
+                            <input type="hidden" id="id_compra" name="id_compra">
+                            <input type="hidden" id="id_producto" name="id_producto">
+
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editModalLabel">Editar Compra</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="cantidad">Cantidad</label>
+                                    <input type="number" class="form-control" id="cantidad" name="cantidad" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="costo_unitario">Costo Unitario</label>
+                                    <input type="number" class="form-control" id="costo_unitario" name="costo_unitario" step="0.01" required>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+            <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+            <script>
+                                    function cargarCompra(idCompra, idProducto, cantidad, costoTotal) {
+                                        $('#id_compra').val(idCompra);
+                                        $('#id_producto').val(idProducto);
+                                        $('#cantidad').val(cantidad);
+                                        $('#costo_unitario').val((costoTotal / cantidad).toFixed(2));
+                                        $('#editModal').modal('show');
+                                    }
+            </script>
     </body>
 </html>

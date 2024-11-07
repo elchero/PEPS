@@ -72,38 +72,66 @@ public class ComprasServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         //processRequest(request, response);
-        String mensaje;
+        String action = request.getParameter("action");
+        String mensaje = "";
+
         try {
-            // Obtener los parámetros del formulario
-            int idProducto = Integer.parseInt(request.getParameter("id_producto"));
-            int cantidad = Integer.parseInt(request.getParameter("cantidad"));
-            double costoUnitario = Double.parseDouble(request.getParameter("costo_unitario"));
-
-            // Crear objetos para compra y lote
-            Compras compra = new Compras();
-            compra.setId_producto(idProducto);
-            compra.setCantidad(cantidad);
-            compra.setCosto_total(cantidad * costoUnitario);
-
-            Lotes lote = new Lotes();
-            lote.setId_producto(idProducto);
-            lote.setCosto_unitario(costoUnitario);
-
-            // Llamar al DAO para registrar la compra y el lote
             ComprasDAO comprasDAO = new ComprasDAO();
-            boolean exito = comprasDAO.registrarCompraYCrearLote(compra, lote);
 
-            mensaje = exito ? "Compra registrada exitosamente" : "Error al registrar la compra";
+            if ("create".equals(action)) {
+                int idProducto = Integer.parseInt(request.getParameter("id_producto"));
+                int cantidad = Integer.parseInt(request.getParameter("cantidad"));
+                double costoUnitario = Double.parseDouble(request.getParameter("costo_unitario"));
+
+                // Crear objetos para compra y lote
+                Compras compra = new Compras();
+                compra.setId_producto(idProducto);
+                compra.setCantidad(cantidad);
+                compra.setCosto_total(cantidad * costoUnitario);
+
+                Lotes lote = new Lotes();
+                lote.setId_producto(idProducto);
+                lote.setCosto_unitario(costoUnitario);
+
+                // Registrar la compra y el lote
+                boolean exito = comprasDAO.registrarCompraYCrearLote(compra, lote);
+                mensaje = exito ? "Compra registrada exitosamente" : "Error al registrar la compra";
+
+            } else if ("update".equals(action)) {
+                // Editar una compra
+                int idCompra = Integer.parseInt(request.getParameter("id_compra"));
+                int idProducto = Integer.parseInt(request.getParameter("id_producto"));
+                int cantidad = Integer.parseInt(request.getParameter("cantidad"));
+                double costoUnitario = Double.parseDouble(request.getParameter("costo_unitario"));
+
+                Compras compra = new Compras();
+                compra.setId_compra(idCompra);
+                compra.setId_producto(idProducto);
+                compra.setCantidad(cantidad);
+                compra.setCosto_total(cantidad * costoUnitario);
+
+                Lotes lote = new Lotes();
+                lote.setCosto_unitario(costoUnitario);
+                lote.setId_lote(idProducto);
+
+                boolean exito = comprasDAO.actualizarCompraYActualizarLote(compra, lote);
+                mensaje = exito ? "Compra actualizada exitosamente" : "Error al actualizar la compra";
+
+            } else if ("delete".equals(action)) {
+                // Eliminar una compra
+                int idCompra = Integer.parseInt(request.getParameter("id_compra"));
+                int idLote = Integer.parseInt(request.getParameter("id_lote"));
+                boolean exito = comprasDAO.eliminarCompraYRelacionados(idCompra, idLote);
+                mensaje = exito ? "Compra eliminada exitosamente" : "Error al eliminar la compra";
+            }
 
         } catch (Exception e) {
             mensaje = "Error al procesar la solicitud: " + e.getMessage();
         }
 
-        // Actualizar las listas para mostrarlas en la JSP
+        // Listar nuevamente y redirigir
         listarComprasYLotes(request);
         request.setAttribute("mensaje", mensaje);
-
-        // Redirigir a la misma página JSP
         request.getRequestDispatcher("compras.jsp").forward(request, response);
     }
 
