@@ -154,4 +154,100 @@ public class ComprasDAO {
         return listaProductos;
     }
 
+    public boolean actualizarCompraYActualizarLote(Compras compra, Lotes lote) {
+        String sqlCompra = "UPDATE compras SET cantidad = ?, costo_total = ? WHERE id_compra = ?";
+        String sqlLote = "UPDATE lotes SET costo_unitario = ? WHERE id_lote = ?";
+        String sqlLoteInventario = "UPDATE lote_inventario SET cantidad_total = ?, cantidad_disponible = ? WHERE id_lote = ?";
+
+        try {
+            con.setAutoCommit(false);
+
+            // Actualizar en 'compras'
+            try (PreparedStatement psCompra = con.prepareStatement(sqlCompra)) {
+                psCompra.setInt(1, compra.getCantidad());
+                psCompra.setDouble(2, compra.getCantidad() * lote.getCosto_unitario());
+                psCompra.setInt(3, compra.getId_compra());
+                psCompra.executeUpdate();
+            }
+
+            // Actualizar en 'lotes'
+            try (PreparedStatement psLote = con.prepareStatement(sqlLote)) {
+                psLote.setDouble(1, lote.getCosto_unitario());
+                psLote.setInt(2, lote.getId_lote());
+                psLote.executeUpdate();
+            }
+
+            // Actualizar inventario en 'lote_inventario'
+            try (PreparedStatement psLoteInventario = con.prepareStatement(sqlLoteInventario)) {
+                psLoteInventario.setInt(1, compra.getCantidad());
+                psLoteInventario.setInt(2, compra.getCantidad()); // Asegúrate de calcular correctamente la cantidad disponible
+                psLoteInventario.setInt(3, lote.getId_lote());
+                psLoteInventario.executeUpdate();
+            }
+
+            con.commit();
+            return true;
+
+        } catch (SQLException e) {
+            try {
+                con.rollback();
+            } catch (SQLException rollbackEx) {
+                System.err.println("Error en rollback: " + rollbackEx.getMessage());
+            }
+            System.err.println("Error al actualizar compra y lote: " + e.getMessage());
+            return false;
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException ex) {
+                System.err.println("Error al restablecer auto-commit: " + ex.getMessage());
+            }
+        }
+    }
+
+    public boolean eliminarCompraYRelacionados(int idCompra, int idLote) {
+        String sqlEliminarCompra = "DELETE FROM compras WHERE id_compra = ?";
+        String sqlEliminarLoteInventario = "DELETE FROM lote_inventario WHERE id_lote = ?";
+        String sqlEliminarLote = "DELETE FROM lotes WHERE id_lote = ?";
+
+        try {
+            con.setAutoCommit(false);
+
+            // Eliminar la compra de 'compras'
+            try (PreparedStatement psEliminarCompra = con.prepareStatement(sqlEliminarCompra)) {
+                psEliminarCompra.setInt(1, idCompra);
+                psEliminarCompra.executeUpdate();
+            }
+
+            // Eliminar el registro de inventario en 'lote_inventario'
+            try (PreparedStatement psEliminarLoteInventario = con.prepareStatement(sqlEliminarLoteInventario)) {
+                psEliminarLoteInventario.setInt(1, idLote);
+                psEliminarLoteInventario.executeUpdate();
+            }
+
+            // Eliminar el lote de 'lotes'
+            try (PreparedStatement psEliminarLote = con.prepareStatement(sqlEliminarLote)) {
+                psEliminarLote.setInt(1, idLote);
+                psEliminarLote.executeUpdate();
+            }
+
+            con.commit();
+            return true;
+
+        } catch (SQLException e) {
+            try {
+                con.rollback();
+            } catch (SQLException rollbackEx) {
+                System.err.println("Error en rollback: " + rollbackEx.getMessage());
+            }
+            System.err.println("Error al eliminar compra y registros relacionados: " + e.getMessage());
+            return false;
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException ex) {
+                System.err.println("Error al restablecer auto-commit: " + ex.getMessage());
+            }
+        }
+    }
 }
