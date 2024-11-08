@@ -1,8 +1,10 @@
 db\cn.class
 com\devconta\gestioninventariopeps\resources\JakartaEE8Resource.class
 modelos\Lote_inventario.class
+controladores\InventarioInicialServlet.class
 modelos\Movimientos_inventario.class
 modelos\Ventas.class
+modelosDAO\InventarioInicialDAO.class
 modelos\Productos.class
 modelos\Lotes.class
 controladores\ProductosServlet.class
