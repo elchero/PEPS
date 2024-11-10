@@ -22,13 +22,26 @@ public class ComprasDAO {
     }
 
     // Método para registrar una compra y crear un lote
-    public boolean registrarCompraYCrearLote(Compras compra, Lotes lote) {
-        String sqlCompra = "INSERT INTO compras (id_producto, id_lote, cantidad, costo_total, fecha_compra) VALUES (?, ?, ?, ?, ?)";
-        String sqlLote = "INSERT INTO lotes (id_producto, costo_unitario, fecha_ingreso) VALUES (?, ?, ?)";
-        String sqlLoteInventario = "INSERT INTO lote_inventario (id_lote, cantidad_total, cantidad_disponible) VALUES (?, ?, ?)";
+  public boolean registrarCompraYCrearLote(Compras compra, Lotes lote) {
+        // Primero verificamos si existe al menos un registro
+        String sqlVerificar = "SELECT COUNT(*) FROM compras";
 
         try {
+            // Verificar si existen registros previos
+            try (PreparedStatement psVerificar = con.prepareStatement(sqlVerificar)) {
+                try (ResultSet rs = psVerificar.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) == 0) {
+                        // Si no hay registros previos, no permitir la inserción
+                        return false;
+                    }
+                }
+            }
+
             con.setAutoCommit(false);
+
+            String sqlCompra = "INSERT INTO compras (id_producto, id_lote, cantidad, costo_total, fecha_compra) VALUES (?, ?, ?, ?, ?)";
+            String sqlLote = "INSERT INTO lotes (id_producto, costo_unitario, fecha_ingreso) VALUES (?, ?, ?)";
+            String sqlLoteInventario = "INSERT INTO lote_inventario (id_lote, cantidad_total, cantidad_disponible) VALUES (?, ?, ?)";
 
             // Crear el lote en 'lotes' y obtener su id
             try (PreparedStatement psLote = con.prepareStatement(sqlLote, Statement.RETURN_GENERATED_KEYS)) {
@@ -40,7 +53,7 @@ public class ComprasDAO {
                 ResultSet rsLote = psLote.getGeneratedKeys();
                 if (rsLote.next()) {
                     int idLote = rsLote.getInt(1);
-                    lote.setId_lote(idLote); // Guardar el ID generado
+                    lote.setId_lote(idLote);
                     compra.setId_lote(idLote);
                 } else {
                     throw new SQLException("No se pudo obtener el ID del nuevo lote");
@@ -52,12 +65,12 @@ public class ComprasDAO {
                 psCompra.setInt(1, compra.getId_producto());
                 psCompra.setInt(2, compra.getId_lote());
                 psCompra.setInt(3, compra.getCantidad());
-                psCompra.setDouble(4, compra.getCantidad() * lote.getCosto_unitario()); // Calcular el costo total
+                psCompra.setDouble(4, compra.getCantidad() * lote.getCosto_unitario());
                 psCompra.setTimestamp(5, compra.getFecha_compra());
                 psCompra.executeUpdate();
             }
 
-            // Insertar o actualizar la información del inventario en 'lote_inventario'
+            // Insertar en 'lote_inventario'
             try (PreparedStatement psLoteInventario = con.prepareStatement(sqlLoteInventario)) {
                 psLoteInventario.setInt(1, lote.getId_lote());
                 psLoteInventario.setInt(2, compra.getCantidad());
@@ -65,7 +78,6 @@ public class ComprasDAO {
                 psLoteInventario.executeUpdate();
             }
 
-            // Confirmar la transacción
             con.commit();
             return true;
 

@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="es">
     <head>
@@ -84,12 +85,15 @@
             </form>
             <!-- Mensaje de éxito o error -->
             <c:if test="${not empty mensaje}">
-                <div class="alert alert-info mt-3" role="alert">
-                    ${mensaje}
-                </div>
+                <c:choose>
+                    <c:when test="${fn:contains(mensaje, 'Error') || fn:contains(mensaje, 'No se puede') || fn:contains(mensaje, 'Ya existe')}">
+                        <div class="alert alert-danger mt-3" role="alert">${mensaje}</div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="alert alert-success mt-3" role="alert">${mensaje}</div>
+                    </c:otherwise>
+                </c:choose>
             </c:if>
-
-
             <!-- Tabla de Compras -->
             <h3 class="mt-4">Listado de Compras</h3>
             <table class="table table-striped">
@@ -186,9 +190,9 @@
 
             <script>
 
-                        function confirmarEliminacion() {
-                            return confirm('¿Está seguro que desea eliminar esta compra?');
-                        }
+                                    function confirmarEliminacion() {
+                                        return confirm('¿Está seguro que desea eliminar esta compra?');
+                                    }
             </script>
     </body>
 </html>

@@ -87,8 +87,13 @@ public class ComprasServlet extends HttpServlet {
 
                 // Registrar la compra y el lote
                 boolean exito = comprasDAO.registrarCompraYCrearLote(compra, lote);
-                mensaje = exito ? "Compra registrada exitosamente" : "Error al registrar la compra";
-
+                if (exito) {
+                    mensaje = "Compra registrada exitosamente";
+                    request.setAttribute("tipoMensaje", "success");
+                } else {
+                    mensaje = "Error: No se puede registrar la compra porque no existe un inventario inicial. Debe registrar primero el inventario inicial.";
+                    request.setAttribute("tipoMensaje", "danger");
+                }
             } else if ("update".equals(action)) {
                 // Editar una compra
                 int idCompra = Integer.parseInt(request.getParameter("id_compra"));

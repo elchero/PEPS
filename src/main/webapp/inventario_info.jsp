@@ -45,7 +45,7 @@
         <table class="table table-striped table-bordered">
             <thead>
                 <tr>
-                    <th>ID Compra</th>
+                    <th>ID</th>
                     <th>Nombre Producto</th>
                     <th>ID Lote</th>
                     <th>Cantidad</th>
