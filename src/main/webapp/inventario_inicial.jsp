@@ -92,7 +92,7 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>ID Compra</th>
+                        <th>ID</th>
                         <th>Nombre del Producto</th>
                         <th>ID Lote</th>
                         <th>Cantidad</th>

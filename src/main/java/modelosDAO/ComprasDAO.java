@@ -89,9 +89,20 @@ public class ComprasDAO {
     // Método para listar todas las compras
     public List<Compras> listarCompras() {
         List<Compras> listaCompras = new ArrayList<>();
-        String sql = "SELECT c.id_compra, c.id_producto, p.nombre, c.id_lote, c.cantidad, c.costo_total, c.fecha_compra "
+        String sql = "SELECT "
+                + "c.id_compra, "
+                + "p.nombre, "
+                + "c.id_lote, "
+                + "c.cantidad, "
+                + "l.costo_unitario, "
+                + "c.costo_total, "
+                + "c.fecha_compra, "
+                + "c.id_producto "
                 + "FROM compras c "
-                + "JOIN productos p ON c.id_producto = p.id_producto";
+                + "JOIN lotes l ON c.id_lote = l.id_lote "
+                + "JOIN lote_inventario li ON l.id_lote = li.id_lote "
+                + "JOIN productos p ON c.id_producto = p.id_producto "
+                + "WHERE c.fecha_compra > (SELECT MIN(fecha_compra) FROM compras)";
 
         try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
@@ -104,6 +115,7 @@ public class ComprasDAO {
                         rs.getTimestamp("fecha_compra")
                 );
                 compra.setNombre(rs.getString("nombre"));
+                compra.setCosto_unitario(rs.getDouble("costo_unitario"));
                 listaCompras.add(compra);
             }
         } catch (SQLException e) {
@@ -116,7 +128,7 @@ public class ComprasDAO {
         List<Lotes> listaLotes = new ArrayList<>();
         String sql = "SELECT l.id_lote, l.id_producto, p.nombre, l.costo_unitario, l.fecha_ingreso "
                 + "FROM lotes l "
-                + "JOIN productos p ON l.id_producto = p.id_producto";  // Corregí el nombre de la columna en el JOIN
+                + "JOIN productos p ON l.id_producto = p.id_producto";
 
         try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
@@ -250,4 +262,46 @@ public class ComprasDAO {
             }
         }
     }
+
+    public List<Compras> listarInventarioInfo() {
+        List<Compras> listaInventarioInfo = new ArrayList<>();
+        String sql = "SELECT "
+                + "c.id_compra, "
+                + "p.nombre, "
+                + "c.id_lote, "
+                + "c.cantidad, "
+                + "l.costo_unitario, "
+                + "c.costo_total, "
+                + "li.cantidad_disponible, "
+                + "c.fecha_compra, "
+                + "CASE "
+                + "WHEN c.fecha_compra = (SELECT MIN(fecha_compra) FROM compras) THEN 'Inventario Inicial' "
+                + "ELSE 'Compra' "
+                + "END AS tipo_movimiento "
+                + "FROM compras c "
+                + "JOIN lotes l ON c.id_lote = l.id_lote "
+                + "JOIN lote_inventario li ON l.id_lote = li.id_lote "
+                + "JOIN productos p ON c.id_producto = p.id_producto";
+
+        try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                Compras compra = new Compras(
+                        rs.getInt("id_compra"),
+                        rs.getInt("id_lote"),
+                        rs.getInt("cantidad"),
+                        rs.getDouble("costo_total"),
+                        rs.getTimestamp("fecha_compra")
+                );
+                compra.setNombre(rs.getString("nombre"));
+                compra.setCosto_unitario(rs.getDouble("costo_unitario"));
+                compra.setCantidad_disponible(rs.getInt("cantidad_disponible"));
+                compra.setTipo_movimiento(rs.getString("tipo_movimiento"));
+                listaInventarioInfo.add(compra);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al listar compras: " + e.getMessage());
+        }
+        return listaInventarioInfo;
+    }
+
 }

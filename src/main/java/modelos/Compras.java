@@ -10,6 +10,7 @@ public class Compras {
     private String nombre; //ES el nombre del producto
     private double costo_unitario;
     private int cantidad_disponible;
+    private String tipo_movimiento; //Es para la consulta de InventarioInfo, no es como tal un atributo de base de datos
 
     public Compras() {
     }
@@ -101,6 +102,14 @@ public class Compras {
 
     public void setCantidad_disponible(int cantidad_disponible) {
         this.cantidad_disponible = cantidad_disponible;
+    }
+
+    public String getTipo_movimiento() {
+        return tipo_movimiento;
+    }
+
+    public void setTipo_movimiento(String tipo_movimiento) {
+        this.tipo_movimiento = tipo_movimiento;
     }
 
 }

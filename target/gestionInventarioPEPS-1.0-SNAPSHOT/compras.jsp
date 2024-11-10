@@ -99,6 +99,7 @@
                         <th>Producto</th>
                         <th>ID lote</th>
                         <th>Cantidad</th>
+                        <th>Costo Unitario</th>
                         <th>Costo Total</th>
                         <th>Fecha</th>
                         <th>Acciones</th>
@@ -111,15 +112,29 @@
                             <td>${compra.nombre}</td>
                             <td>${compra.id_lote}</td>
                             <td>${compra.cantidad}</td>
-                            <td>${compra.costo_total}</td>
+                            <td>
+                                <fmt:formatNumber 
+                                    value="${compra.costo_unitario}" 
+                                    type="currency" 
+                                    currencySymbol="$" 
+                                    minFractionDigits="2" 
+                                    maxFractionDigits="2"
+                                    />
+                            </td>
+                            <td>
+                                <fmt:formatNumber 
+                                    value="${compra.costo_total}" 
+                                    type="currency" 
+                                    currencySymbol="$" 
+                                    minFractionDigits="2" 
+                                    maxFractionDigits="2"
+                                    />
+                            </td>
                             <td>
                                 <fmt:formatDate value="${compra.fecha_compra}" pattern="d'/'MMMM'/'yyyy '-' HH:mm:ss" />
                             </td>
-                            <td>
-                                <button class="btn btn-warning btn-sm" onclick="cargarCompra('${compra.id_compra}', '${compra.id_producto}', '${compra.cantidad}', '${compra.costo_total}')">
-                                    Editar
-                                </button>
-                                <form method="post" action="ComprasServlet" style="display:inline;">
+                            <td>                           
+                                <form method="post" action="ComprasServlet" style="display:inline;" onsubmit="return confirmarEliminacion()">
                                     <input type="hidden" name="action" value="delete">
                                     <input type="hidden" name="id_compra" value="${compra.id_compra}">
                                     <input type="hidden" name="id_lote" value="${compra.id_lote}">
@@ -131,30 +146,6 @@
                 </tbody>
             </table>
 
-            <!-- Tabla de Lotes -->
-            <h3 class="mt-4">Listado de Lotes</h3>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ID Lote</th>
-                        <th>ID Producto</th>
-                        <th>Costo Unitario</th>
-                        <th>Fecha de Ingreso</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:forEach var="lote" items="${listaLotes}">
-                        <tr>
-                            <td>${lote.id_lote}</td>
-                            <td>${lote.nombre}</td>
-                            <td>${lote.costo_unitario}</td>
-                            <td>
-                                <fmt:formatDate value="${lote.fecha_ingreso}" pattern="d'/'MMMM'/'yyyy '-' HH:mm:ss" />
-                            </td>
-                        </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
             <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -194,13 +185,10 @@
             <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
             <script>
-                                    function cargarCompra(idCompra, idProducto, cantidad, costoTotal) {
-                                        $('#id_compra').val(idCompra);
-                                        $('#id_producto').val(idProducto);
-                                        $('#cantidad').val(cantidad);
-                                        $('#costo_unitario').val((costoTotal / cantidad).toFixed(2));
-                                        $('#editModal').modal('show');
-                                    }
+
+                        function confirmarEliminacion() {
+                            return confirm('¿Está seguro que desea eliminar esta compra?');
+                        }
             </script>
     </body>
 </html>

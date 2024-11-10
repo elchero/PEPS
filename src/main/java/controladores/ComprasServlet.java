@@ -60,14 +60,6 @@ public class ComprasServlet extends HttpServlet {
         request.getRequestDispatcher("compras.jsp").forward(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -140,11 +132,9 @@ public class ComprasServlet extends HttpServlet {
         try {
             ComprasDAO comprasDAO = new ComprasDAO();
             List<Compras> listaCompras = comprasDAO.listarCompras();
-            List<Lotes> listaLotes = comprasDAO.listarLotes(); // Suponiendo que este método existe
             List<Productos> listaProductos = comprasDAO.listarProductos();
 
             request.setAttribute("listaCompras", listaCompras);
-            request.setAttribute("listaLotes", listaLotes);
             request.setAttribute("listaProductos", listaProductos);
         } catch (Exception e) {
             System.err.println("Error al listar compras o lotes: " + e.getMessage());
