@@ -3,10 +3,13 @@ com\devconta\gestioninventariopeps\resources\JakartaEE8Resource.class
 modelos\Lote_inventario.class
 controladores\InventarioInicialServlet.class
 modelos\Movimientos_inventario.class
+controladores\VentasServlet.class
 modelos\Ventas.class
 modelosDAO\InventarioInicialDAO.class
+otras_funcionalidades\LoteDisponible.class
 modelos\Productos.class
 modelos\Lotes.class
+modelosDAO\VentasDAO.class
 controladores\ProductosServlet.class
 controladores\ComprasServlet.class
 modelos\Compras.class

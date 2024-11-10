@@ -7,6 +7,7 @@ public class Ventas {
     private int id_venta, id_producto, id_lote, cantidad;
     private double precio_venta_unitario;
     private Timestamp fecha_venta;
+    private String nombre; //nombre del producto
 
     public Ventas() {
     }
@@ -74,6 +75,14 @@ public class Ventas {
 
     public void setFecha_venta(Timestamp fecha_venta) {
         this.fecha_venta = fecha_venta;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 
 }
