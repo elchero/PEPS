@@ -72,7 +72,7 @@
                 </div>
 
                 <div class="text-end">
-                    <button type="submit" class="btn btn-primary px-4 py-2">Registrar Compra</button>
+                    <button type="submit" class="btn btn-primary px-4 py-2">Registrar Inventario</button>
                 </div>
             </form>
 

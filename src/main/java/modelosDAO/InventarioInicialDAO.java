@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import modelos.Compras;
@@ -26,11 +27,16 @@ public class InventarioInicialDAO {
         String sqlCompra = "INSERT INTO compras (id_producto, id_lote, cantidad, costo_total, fecha_compra) VALUES (?, ?, ?, ?, ?)";
         String sqlLote = "INSERT INTO lotes (id_producto, costo_unitario, fecha_ingreso) VALUES (?, ?, ?)";
         String sqlLoteInventario = "INSERT INTO lote_inventario (id_lote, cantidad_total, cantidad_disponible) VALUES (?, ?, ?)";
+        String sqlMovimiento = "INSERT INTO movimientos_inventario (tipo_movimiento, id_producto, id_lote, cantidad, costo_unitario, iva, fecha_movimiento) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try {
             con.setAutoCommit(false);
 
-            // Crear el lote en 'lotes' y obtener su id
+            // Calcular el IVA (13% del costo unitario)
+            double iva = lote.getCosto_unitario() * 0.13;
+
+            // Crear el lote
+            int idLote;
             try (PreparedStatement psLote = con.prepareStatement(sqlLote, Statement.RETURN_GENERATED_KEYS)) {
                 psLote.setInt(1, lote.getId_producto());
                 psLote.setDouble(2, lote.getCosto_unitario());
@@ -39,25 +45,26 @@ public class InventarioInicialDAO {
 
                 ResultSet rsLote = psLote.getGeneratedKeys();
                 if (rsLote.next()) {
-                    int idLote = rsLote.getInt(1);
-                    lote.setId_lote(idLote); // Guardar el ID generado
+                    idLote = rsLote.getInt(1);
+                    lote.setId_lote(idLote);
                     compra.setId_lote(idLote);
                 } else {
                     throw new SQLException("No se pudo obtener el ID del nuevo lote");
                 }
             }
 
-            // Registrar la compra en 'compras'
+            // Registrar la compra
+            double costoTotal = compra.getCantidad() * (lote.getCosto_unitario() + iva); // Incluye IVA en el costo total
             try (PreparedStatement psCompra = con.prepareStatement(sqlCompra)) {
                 psCompra.setInt(1, compra.getId_producto());
                 psCompra.setInt(2, compra.getId_lote());
                 psCompra.setInt(3, compra.getCantidad());
-                psCompra.setDouble(4, compra.getCantidad() * lote.getCosto_unitario()); // Calcular el costo total
+                psCompra.setDouble(4, costoTotal);
                 psCompra.setTimestamp(5, compra.getFecha_compra());
                 psCompra.executeUpdate();
             }
 
-            // Insertar o actualizar la información del inventario en 'lote_inventario'
+            // Registrar en lote_inventario
             try (PreparedStatement psLoteInventario = con.prepareStatement(sqlLoteInventario)) {
                 psLoteInventario.setInt(1, lote.getId_lote());
                 psLoteInventario.setInt(2, compra.getCantidad());
@@ -65,7 +72,18 @@ public class InventarioInicialDAO {
                 psLoteInventario.executeUpdate();
             }
 
-            // Confirmar la transacción
+            // Registrar el movimiento de inventario
+            try (PreparedStatement psMovimiento = con.prepareStatement(sqlMovimiento)) {
+                psMovimiento.setString(1, "compra");
+                psMovimiento.setInt(2, compra.getId_producto());
+                psMovimiento.setInt(3, compra.getId_lote());
+                psMovimiento.setInt(4, compra.getCantidad());
+                psMovimiento.setDouble(5, lote.getCosto_unitario());
+                psMovimiento.setDouble(6, iva); // IVA calculado
+                psMovimiento.setTimestamp(7, new Timestamp(System.currentTimeMillis()));
+                psMovimiento.executeUpdate();
+            }
+
             con.commit();
             return true;
 
@@ -154,6 +172,7 @@ public class InventarioInicialDAO {
         }
         return compras;
     }
+
     public List<Productos> listarProductos() {
         List<Productos> listaProductos = new ArrayList<>();
         String sql = "SELECT id_producto, nombre FROM productos";
@@ -172,41 +191,45 @@ public class InventarioInicialDAO {
     }
 
     public boolean eliminarCompraYRelacionados(int idCompra, int idLote) {
-        // Primero verificamos si hay compras posteriores
         String sqlVerificarCompras = "SELECT COUNT(*) FROM compras WHERE fecha_compra > (SELECT fecha_compra FROM compras WHERE id_compra = ?)";
 
         try {
-            // Verificar si existen compras posteriores
+            // Verificar compras posteriores
             try (PreparedStatement psVerificar = con.prepareStatement(sqlVerificarCompras)) {
                 psVerificar.setInt(1, idCompra);
                 try (ResultSet rs = psVerificar.executeQuery()) {
                     if (rs.next() && rs.getInt(1) > 0) {
-                        // Si hay compras posteriores, no permitir la eliminación
                         return false;
                     }
                 }
             }
 
-            // Si no hay compras posteriores, procedemos con la eliminación
             con.setAutoCommit(false);
 
+            String sqlEliminarMovimiento = "DELETE FROM movimientos_inventario WHERE id_lote = ? AND tipo_movimiento = 'compra'";
             String sqlEliminarCompra = "DELETE FROM compras WHERE id_compra = ?";
             String sqlEliminarLoteInventario = "DELETE FROM lote_inventario WHERE id_lote = ?";
             String sqlEliminarLote = "DELETE FROM lotes WHERE id_lote = ?";
 
-            // Eliminar la compra de 'compras'
+            // Eliminar el movimiento de inventario
+            try (PreparedStatement psEliminarMovimiento = con.prepareStatement(sqlEliminarMovimiento)) {
+                psEliminarMovimiento.setInt(1, idLote);
+                psEliminarMovimiento.executeUpdate();
+            }
+
+            // Eliminar la compra
             try (PreparedStatement psEliminarCompra = con.prepareStatement(sqlEliminarCompra)) {
                 psEliminarCompra.setInt(1, idCompra);
                 psEliminarCompra.executeUpdate();
             }
 
-            // Eliminar el registro de inventario en 'lote_inventario'
+            // Eliminar el registro de inventario
             try (PreparedStatement psEliminarLoteInventario = con.prepareStatement(sqlEliminarLoteInventario)) {
                 psEliminarLoteInventario.setInt(1, idLote);
                 psEliminarLoteInventario.executeUpdate();
             }
 
-            // Eliminar el lote de 'lotes'
+            // Eliminar el lote
             try (PreparedStatement psEliminarLote = con.prepareStatement(sqlEliminarLote)) {
                 psEliminarLote.setInt(1, idLote);
                 psEliminarLote.executeUpdate();
