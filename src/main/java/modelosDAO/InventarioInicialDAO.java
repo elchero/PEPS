@@ -87,29 +87,72 @@ public class InventarioInicialDAO {
     }
 
     // Método para listar todas las compras
+    public Compras obtenerInventarioInicial() {
+        Compras inventarioInicial = null;
+        String sql = "SELECT \n"
+                + "    c.id_compra,\n"
+                + "    p.nombre,\n"
+                + "    c.id_lote,\n"
+                + "    c.cantidad,\n"
+                + "    l.costo_unitario,\n"
+                + "    c.costo_total,\n"
+                + "    c.fecha_compra\n"
+                + "FROM \n"
+                + "    compras c\n"
+                + "JOIN \n"
+                + "    lotes l ON c.id_lote = l.id_lote\n"
+                + "JOIN \n"
+                + "    lote_inventario li ON l.id_lote = li.id_lote\n"
+                + "JOIN \n"
+                + "    productos p ON c.id_producto = p.id_producto\n"
+                + "WHERE \n"
+                + "    c.fecha_compra = (\n"
+                + "        SELECT \n"
+                + "            MIN(fecha_compra)\n"
+                + "        FROM \n"
+                + "            compras\n"
+                + "    )\n"
+                + "LIMIT 1;";
+
+        try (PreparedStatement stmt = con.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                inventarioInicial = new Compras();
+                inventarioInicial.setId_compra(rs.getInt("id_compra"));
+                inventarioInicial.setNombre(rs.getString("nombre"));
+                inventarioInicial.setId_lote(rs.getInt("id_lote"));
+                inventarioInicial.setCantidad(rs.getInt("cantidad"));
+                inventarioInicial.setCosto_unitario(rs.getDouble("costo_unitario"));
+                inventarioInicial.setCosto_total(rs.getDouble("costo_total"));
+                inventarioInicial.setFecha_compra(rs.getTimestamp("fecha_compra"));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener inventario inicial: " + e.getMessage());
+        }
+
+        return inventarioInicial;
+    }
+
     public List<Compras> listarCompras() {
-        List<Compras> listaCompras = new ArrayList<>();
-        String sql = "SELECT c.id_compra, c.id_producto, p.nombre, c.id_lote, c.cantidad, c.costo_total, c.fecha_compra "
+        List<Compras> compras = new ArrayList<>();
+        String sql = "SELECT c.id_compra, p.nombre AS nombre_producto, c.id_lote, c.cantidad, c.costo_total, c.fecha_compra "
                 + "FROM compras c "
                 + "JOIN productos p ON c.id_producto = p.id_producto";
 
-        try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+        try (PreparedStatement stmt = con.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
-                Compras compra = new Compras(
-                        rs.getInt("id_compra"),
-                        rs.getInt("id_producto"),
-                        rs.getInt("id_lote"),
-                        rs.getInt("cantidad"),
-                        rs.getDouble("costo_total"),
-                        rs.getTimestamp("fecha_compra")
-                );
+                Compras compra = new Compras();
+                compra.setId_compra(rs.getInt("id_compra"));
                 compra.setNombre(rs.getString("nombre"));
-                listaCompras.add(compra);
+                compra.setId_lote(rs.getInt("id_lote"));
+                compra.setCantidad(rs.getInt("cantidad"));
+                compra.setCosto_total(rs.getDouble("costo_total"));
+                compra.setFecha_compra(rs.getTimestamp("fecha_compra"));
+                compras.add(compra);
             }
         } catch (SQLException e) {
             System.err.println("Error al listar compras: " + e.getMessage());
         }
-        return listaCompras;
+        return compras;
     }
 
     public List<Lotes> listarLotes() {
@@ -206,12 +249,27 @@ public class InventarioInicialDAO {
     }
 
     public boolean eliminarCompraYRelacionados(int idCompra, int idLote) {
-        String sqlEliminarCompra = "DELETE FROM compras WHERE id_compra = ?";
-        String sqlEliminarLoteInventario = "DELETE FROM lote_inventario WHERE id_lote = ?";
-        String sqlEliminarLote = "DELETE FROM lotes WHERE id_lote = ?";
+        // Primero verificamos si hay compras posteriores
+        String sqlVerificarCompras = "SELECT COUNT(*) FROM compras WHERE fecha_compra > (SELECT fecha_compra FROM compras WHERE id_compra = ?)";
 
         try {
+            // Verificar si existen compras posteriores
+            try (PreparedStatement psVerificar = con.prepareStatement(sqlVerificarCompras)) {
+                psVerificar.setInt(1, idCompra);
+                try (ResultSet rs = psVerificar.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        // Si hay compras posteriores, no permitir la eliminación
+                        return false;
+                    }
+                }
+            }
+
+            // Si no hay compras posteriores, procedemos con la eliminación
             con.setAutoCommit(false);
+
+            String sqlEliminarCompra = "DELETE FROM compras WHERE id_compra = ?";
+            String sqlEliminarLoteInventario = "DELETE FROM lote_inventario WHERE id_lote = ?";
+            String sqlEliminarLote = "DELETE FROM lotes WHERE id_lote = ?";
 
             // Eliminar la compra de 'compras'
             try (PreparedStatement psEliminarCompra = con.prepareStatement(sqlEliminarCompra)) {

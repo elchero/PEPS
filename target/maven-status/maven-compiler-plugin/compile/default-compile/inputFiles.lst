@@ -1,5 +1,6 @@
 C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\db\cn.java
 C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\com\devconta\gestioninventariopeps\JakartaRestConfiguration.java
+C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\controladores\InventarioInicialServlet.java
 C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\modelos\Lote_inventario.java
 C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\modelos\Lotes.java
 C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\modelos\Movimientos_inventario.java
@@ -8,6 +9,7 @@ C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\modelosDA
 C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\modelos\Productos.java
 C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\modelosDAO\ProductosDAO.java
 C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\modelos\Ventas.java
+C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\modelosDAO\InventarioInicialDAO.java
 C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\com\devconta\gestioninventariopeps\resources\JakartaEE8Resource.java
 C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\modelos\Compras.java
 C:\Users\vladi\OneDrive\Documentos\NetBeansProjects\PEPS\src\main\java\controladores\ComprasServlet.java

@@ -8,6 +8,8 @@ public class Compras {
     private double costo_total;
     private Timestamp  fecha_compra;
     private String nombre; //ES el nombre del producto
+    private double costo_unitario;
+    private int cantidad_disponible;
 
     public Compras() {
     }
@@ -83,6 +85,22 @@ public class Compras {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public double getCosto_unitario() {
+        return costo_unitario;
+    }
+
+    public void setCosto_unitario(double costo_unitario) {
+        this.costo_unitario = costo_unitario;
+    }
+
+    public int getCantidad_disponible() {
+        return cantidad_disponible;
+    }
+
+    public void setCantidad_disponible(int cantidad_disponible) {
+        this.cantidad_disponible = cantidad_disponible;
     }
 
 }
