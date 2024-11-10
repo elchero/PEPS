@@ -1,17 +1,17 @@
 package modelos;
 
-import java.sql.Date;
+import java.sql.Timestamp;
 
 public class Ventas {
 
     private int id_venta, id_producto, id_lote, cantidad;
     private double precio_venta_unitario;
-    private Date fecha_venta;
+    private Timestamp fecha_venta;
 
     public Ventas() {
     }
 
-    public Ventas(int id_venta, int id_producto, int id_lote, int cantidad, double precio_venta_unitario, Date fecha_venta) {
+    public Ventas(int id_venta, int id_producto, int id_lote, int cantidad, double precio_venta_unitario, Timestamp fecha_venta) {
         this.id_venta = id_venta;
         this.id_producto = id_producto;
         this.id_lote = id_lote;
@@ -20,7 +20,7 @@ public class Ventas {
         this.fecha_venta = fecha_venta;
     }
 
-    public Ventas(int id_producto, int id_lote, int cantidad, double precio_venta_unitario, Date fecha_venta) {
+    public Ventas(int id_producto, int id_lote, int cantidad, double precio_venta_unitario, Timestamp fecha_venta) {
         this.id_producto = id_producto;
         this.id_lote = id_lote;
         this.cantidad = cantidad;
@@ -68,11 +68,11 @@ public class Ventas {
         this.precio_venta_unitario = precio_venta_unitario;
     }
 
-    public Date getFecha_venta() {
+    public Timestamp getFecha_venta() {
         return fecha_venta;
     }
 
-    public void setFecha_venta(Date fecha_venta) {
+    public void setFecha_venta(Timestamp fecha_venta) {
         this.fecha_venta = fecha_venta;
     }
 

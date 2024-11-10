@@ -1,6 +1,6 @@
 package modelos;
 
-import java.sql.Date;
+import java.sql.Timestamp;
 
 public class Movimientos_inventario {
 
@@ -8,12 +8,12 @@ public class Movimientos_inventario {
     private String tipo_movimiento;
     private int id_producto, id_lote, cantidad;
     private double costo_unitario, iva;
-    private Date fecha_movimiento;
+    private Timestamp fecha_movimiento;
 
     public Movimientos_inventario() {
     }
 
-    public Movimientos_inventario(int id_movimiento, String tipo_movimiento, int id_producto, int id_lote, int cantidad, double costo_unitario, double iva, Date fecha_movimiento) {
+    public Movimientos_inventario(int id_movimiento, String tipo_movimiento, int id_producto, int id_lote, int cantidad, double costo_unitario, double iva, Timestamp fecha_movimiento) {
         this.id_movimiento = id_movimiento;
         this.tipo_movimiento = tipo_movimiento;
         this.id_producto = id_producto;
@@ -24,7 +24,7 @@ public class Movimientos_inventario {
         this.fecha_movimiento = fecha_movimiento;
     }
 
-    public Movimientos_inventario(String tipo_movimiento, int id_producto, int id_lote, int cantidad, double costo_unitario, double iva, Date fecha_movimiento) {
+    public Movimientos_inventario(String tipo_movimiento, int id_producto, int id_lote, int cantidad, double costo_unitario, double iva, Timestamp fecha_movimiento) {
         this.tipo_movimiento = tipo_movimiento;
         this.id_producto = id_producto;
         this.id_lote = id_lote;
@@ -90,12 +90,11 @@ public class Movimientos_inventario {
         this.iva = iva;
     }
 
-    public Date getFecha_movimiento() {
+    public Timestamp getFecha_movimiento() {
         return fecha_movimiento;
     }
 
-    public void setFecha_movimiento(Date fecha_movimiento) {
+    public void setFecha_movimiento(Timestamp fecha_movimiento) {
         this.fecha_movimiento = fecha_movimiento;
     }
-
 }

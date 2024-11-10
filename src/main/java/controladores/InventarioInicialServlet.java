@@ -55,7 +55,7 @@ public class InventarioInicialServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // processRequest(request, response);
-        listarComprasYLotes(request);
+        listarInventarioInicial(request);
         // Redirigir al formulario
         request.getRequestDispatcher("inventario_inicial.jsp").forward(request, response);
     }
@@ -75,7 +75,7 @@ public class InventarioInicialServlet extends HttpServlet {
                 if (inventarioInicialExistente != null) {
                     mensaje = "Ya existe un inventario inicial. No es posible agregar otro.";
                     request.setAttribute("mensaje", mensaje);
-                    listarComprasYLotes(request);
+                    listarInventarioInicial(request);
                     request.getRequestDispatcher("inventario_inicial.jsp").forward(request, response);
                     return;
                 }
@@ -97,27 +97,8 @@ public class InventarioInicialServlet extends HttpServlet {
 
                 boolean exito = inventarioInicialDAO.registrarCompraYCrearLote(compra, lote);
                 mensaje = exito ? "Inventario Inicial registrado exitosamente" : "Error al registrar Inventario Inicial";
-            } else if ("update".equals(action)) {
-                // Editar una compra
-                int idCompra = Integer.parseInt(request.getParameter("id_compra"));
-                int idProducto = Integer.parseInt(request.getParameter("id_producto"));
-                int cantidad = Integer.parseInt(request.getParameter("cantidad"));
-                double costoUnitario = Double.parseDouble(request.getParameter("costo_unitario"));
-
-                Compras compra = new Compras();
-                compra.setId_compra(idCompra);
-                compra.setId_producto(idProducto);
-                compra.setCantidad(cantidad);
-                compra.setCosto_total(cantidad * costoUnitario);
-
-                Lotes lote = new Lotes();
-                lote.setCosto_unitario(costoUnitario);
-                lote.setId_lote(idProducto);
-
-                boolean exito = inventarioInicialDAO.actualizarCompraYActualizarLote(compra, lote);
-                mensaje = exito ? "Inventario Inicial actualizado exitosamente" : "Error al actualizar al actualizar Inventario Inicial";
-
-            } else if ("delete".equals(action)) {
+            } 
+            else if ("delete".equals(action)) {
                 int idCompra = Integer.parseInt(request.getParameter("id_compra"));
                 int idLote = Integer.parseInt(request.getParameter("id_lote"));
                 boolean exito = inventarioInicialDAO.eliminarCompraYRelacionados(idCompra, idLote);
@@ -134,13 +115,13 @@ public class InventarioInicialServlet extends HttpServlet {
         }
 
         // Listar nuevamente y redirigir
-        listarComprasYLotes(request);
+        listarInventarioInicial(request);
         request.setAttribute("mensaje", mensaje);
         request.getRequestDispatcher("inventario_inicial.jsp").forward(request, response);
     }
 
-    // Método para cargar las listas de compras y lotes
-    private void listarComprasYLotes(HttpServletRequest request) {
+    // Método para cargar inventario inicial y productos
+    private void listarInventarioInicial(HttpServletRequest request) {
         try {
             InventarioInicialDAO inventarioInicialDAO = new InventarioInicialDAO();
             Compras inventarioInicial = inventarioInicialDAO.obtenerInventarioInicial();

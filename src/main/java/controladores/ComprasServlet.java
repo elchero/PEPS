@@ -55,7 +55,7 @@ public class ComprasServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // processRequest(request, response);
-        listarComprasYLotes(request);
+        listarCompras(request);
         // Redirigir al formulario
         request.getRequestDispatcher("compras.jsp").forward(request, response);
     }
@@ -94,27 +94,8 @@ public class ComprasServlet extends HttpServlet {
                     mensaje = "Error: No se puede registrar la compra porque no existe un inventario inicial. Debe registrar primero el inventario inicial.";
                     request.setAttribute("tipoMensaje", "danger");
                 }
-            } else if ("update".equals(action)) {
-                // Editar una compra
-                int idCompra = Integer.parseInt(request.getParameter("id_compra"));
-                int idProducto = Integer.parseInt(request.getParameter("id_producto"));
-                int cantidad = Integer.parseInt(request.getParameter("cantidad"));
-                double costoUnitario = Double.parseDouble(request.getParameter("costo_unitario"));
-
-                Compras compra = new Compras();
-                compra.setId_compra(idCompra);
-                compra.setId_producto(idProducto);
-                compra.setCantidad(cantidad);
-                compra.setCosto_total(cantidad * costoUnitario);
-
-                Lotes lote = new Lotes();
-                lote.setCosto_unitario(costoUnitario);
-                lote.setId_lote(idProducto);
-
-                boolean exito = comprasDAO.actualizarCompraYActualizarLote(compra, lote);
-                mensaje = exito ? "Compra actualizada exitosamente" : "Error al actualizar la compra";
-
-            } else if ("delete".equals(action)) {
+            } 
+            else if ("delete".equals(action)) {
                 // Eliminar una compra
                 int idCompra = Integer.parseInt(request.getParameter("id_compra"));
                 int idLote = Integer.parseInt(request.getParameter("id_lote"));
@@ -127,13 +108,13 @@ public class ComprasServlet extends HttpServlet {
         }
 
         // Listar nuevamente y redirigir
-        listarComprasYLotes(request);
+        listarCompras(request);
         request.setAttribute("mensaje", mensaje);
         request.getRequestDispatcher("compras.jsp").forward(request, response);
     }
 
-    // Método para cargar las listas de compras y lotes
-    private void listarComprasYLotes(HttpServletRequest request) {
+    // Método para cargar las listas de compras
+    private void listarCompras(HttpServletRequest request) {
         try {
             ComprasDAO comprasDAO = new ComprasDAO();
             List<Compras> listaCompras = comprasDAO.listarCompras();
@@ -142,7 +123,7 @@ public class ComprasServlet extends HttpServlet {
             request.setAttribute("listaCompras", listaCompras);
             request.setAttribute("listaProductos", listaProductos);
         } catch (Exception e) {
-            System.err.println("Error al listar compras o lotes: " + e.getMessage());
+            System.err.println("Error al listar compras: " + e.getMessage());
         }
     }
 
