@@ -64,6 +64,7 @@
                             <th>Precio Unitario</th>
                             <th>Total</th>
                             <th>Fecha</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -97,6 +98,13 @@
                                         pattern="d/MMMM/yyyy - HH:mm:ss"
                                         />
                                 </td>
+                                <td>
+                                    <form method="post" action="VentasServlet" style="display:inline;" onsubmit="return confirmarEliminacion()">
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="id_venta" value="${venta.id_venta}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                    </form>
+                                </td>
                             </tr>
                         </c:forEach>
                     </tbody>
@@ -109,23 +117,30 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 
         <script>
-            // Puedes agregar validaciones adicionales aquí
-            document.querySelector('form').addEventListener('submit', function (e) {
-                const cantidad = parseInt(document.getElementById('cantidad').value);
-                const precio = parseFloat(document.getElementById('precio_venta_unitario').value);
+                                        // Validación del formulario de creación
+                                        document.querySelector('form[action="VentasServlet"]').addEventListener('submit', function (e) {
+                                            if (this.querySelector('input[name="action"]').value === 'create') {
+                                                const cantidad = parseInt(document.getElementById('cantidad').value);
+                                                const precio = parseFloat(document.getElementById('precio_venta_unitario').value);
 
-                if (cantidad <= 0) {
-                    e.preventDefault();
-                    alert('La cantidad debe ser mayor a 0');
-                    return;
-                }
+                                                if (cantidad <= 0) {
+                                                    e.preventDefault();
+                                                    alert('La cantidad debe ser mayor a 0');
+                                                    return;
+                                                }
 
-                if (precio <= 0) {
-                    e.preventDefault();
-                    alert('El precio debe ser mayor a 0');
-                    return;
-                }
-            });
+                                                if (precio <= 0) {
+                                                    e.preventDefault();
+                                                    alert('El precio debe ser mayor a 0');
+                                                    return;
+                                                }
+                                            }
+                                        });
+
+                                        // Función separada para confirmar eliminación
+                                        function confirmarEliminacion() {
+                                            return confirm('¿Está seguro que desea eliminar esta venta? Se restaurará el inventario.');
+                                        }
         </script>
     </body>
 </html>

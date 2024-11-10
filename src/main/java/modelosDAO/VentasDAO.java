@@ -155,4 +155,68 @@ public class VentasDAO {
         }
         return ventas;
     }
+
+    public boolean eliminarVenta(int idVenta) {
+        try {
+            con.setAutoCommit(false);
+
+            // Primero obtener los detalles de la venta antes de eliminarla
+            String sqlObtenerVenta = "SELECT id_producto, id_lote, cantidad FROM ventas WHERE id_venta = ?";
+            int idProducto = 0;
+            int idLote = 0;
+            int cantidad = 0;
+
+            try (PreparedStatement psObtener = con.prepareStatement(sqlObtenerVenta)) {
+                psObtener.setInt(1, idVenta);
+                ResultSet rs = psObtener.executeQuery();
+                if (rs.next()) {
+                    idProducto = rs.getInt("id_producto");
+                    idLote = rs.getInt("id_lote");
+                    cantidad = rs.getInt("cantidad");
+                } else {
+                    throw new SQLException("No se encontró la venta");
+                }
+            }
+
+            // Restaurar el inventario
+            String sqlRestaurarInventario = "UPDATE lote_inventario SET cantidad_disponible = cantidad_disponible + ? WHERE id_lote = ?";
+            try (PreparedStatement psRestaurar = con.prepareStatement(sqlRestaurarInventario)) {
+                psRestaurar.setInt(1, cantidad);
+                psRestaurar.setInt(2, idLote);
+                psRestaurar.executeUpdate();
+            }
+
+            // Eliminar el movimiento de inventario relacionado
+            String sqlEliminarMovimiento = "DELETE FROM movimientos_inventario WHERE id_lote = ? AND tipo_movimiento = 'venta'";
+            try (PreparedStatement psEliminarMov = con.prepareStatement(sqlEliminarMovimiento)) {
+                psEliminarMov.setInt(1, idLote);
+                psEliminarMov.executeUpdate();
+            }
+
+            // Finalmente eliminar la venta
+            String sqlEliminarVenta = "DELETE FROM ventas WHERE id_venta = ?";
+            try (PreparedStatement psEliminar = con.prepareStatement(sqlEliminarVenta)) {
+                psEliminar.setInt(1, idVenta);
+                psEliminar.executeUpdate();
+            }
+
+            con.commit();
+            return true;
+
+        } catch (SQLException e) {
+            try {
+                con.rollback();
+            } catch (SQLException ex) {
+                System.err.println("Error en rollback: " + ex.getMessage());
+            }
+            System.err.println("Error al eliminar venta: " + e.getMessage());
+            return false;
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println("Error al restablecer autocommit: " + e.getMessage());
+            }
+        }
+    }
 }

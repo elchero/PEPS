@@ -92,8 +92,17 @@ public class VentasServlet extends HttpServlet {
                     mensaje = "Error al registrar la venta. Verifique el stock disponible.";
                     tipoMensaje = "danger";
                 }
-            }
+            } else if ("delete".equals(action)) {
+                int idVenta = Integer.parseInt(request.getParameter("id_venta"));
+                boolean exito = ventasDAO.eliminarVenta(idVenta);
 
+                if (exito) {
+                    mensaje = "Venta eliminada exitosamente y stock restaurado";
+                } else {
+                    mensaje = "Error al eliminar la venta";
+                    tipoMensaje = "danger";
+                }
+            }
         } catch (Exception e) {
             mensaje = "Error al procesar la solicitud: " + e.getMessage();
             tipoMensaje = "danger";
