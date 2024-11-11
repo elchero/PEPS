@@ -74,7 +74,15 @@ public class DevolucionesServlet extends HttpServlet {
 
         try {
             DevolucionesDAO devolucionesDAO = new DevolucionesDAO();
-            if ("create".equals(action)) {
+            if ("revertir".equals(action)) {
+                boolean exito = devolucionesDAO.revertirDevoluciones();
+                if (exito) {
+                    mensaje = "Las devoluciones han sido revertidas exitosamente";
+                } else {
+                    mensaje = "Error al revertir las devoluciones";
+                    tipoMensaje = "danger";
+                }
+            } else if ("create".equals(action)) {
                 String tipoOperacion = request.getParameter("tipo_operacion");
                 int idProducto = Integer.parseInt(request.getParameter("id_producto"));
                 int idLote = Integer.parseInt(request.getParameter("id_lote"));

@@ -108,7 +108,14 @@
                     ${mensaje}
                 </div>
             </c:if>
-
+            <div class="mb-4 d-flex justify-content-end">
+                <form action="DevolucionesServlet" method="post" onsubmit="return confirmarReversion()">
+                    <input type="hidden" name="action" value="revertir">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-arrow-counterclockwise"></i> Revertir Devoluciones
+                    </button>
+                </form>
+            </div>
             <!-- Tabla de Devoluciones -->
             <h3 class="mt-4">Historial de Devoluciones</h3>
             <div class="table-responsive">
@@ -172,102 +179,111 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 
         <script>
-                                function cambiarTipoDevolucion() {
-                                    const tipoSelect = document.getElementById('tipoSelect');
-                                    const ventasSection = document.getElementById('ventasSection');
-                                    const comprasSection = document.getElementById('comprasSection');
+                    function cambiarTipoDevolucion() {
+                        const tipoSelect = document.getElementById('tipoSelect');
+                        const ventasSection = document.getElementById('ventasSection');
+                        const comprasSection = document.getElementById('comprasSection');
 
-                                    // Limpiar campos
-                                    document.getElementById('id_producto').value = '';
-                                    document.getElementById('id_lote').value = '';
-                                    document.getElementById('cantidad').value = '';
-                                    document.getElementById('cantidad').max = '';
-                                    document.getElementById('cantidad').placeholder = '';
+                        // Limpiar campos
+                        document.getElementById('id_producto').value = '';
+                        document.getElementById('id_lote').value = '';
+                        document.getElementById('cantidad').value = '';
+                        document.getElementById('cantidad').max = '';
+                        document.getElementById('cantidad').placeholder = '';
 
-                                    if (tipoSelect.value === 'compra') {
-                                        ventasSection.style.display = 'none';
-                                        comprasSection.style.display = 'block';
-                                        document.getElementById('compraSelect').required = true;
-                                        document.getElementById('ventaSelect').required = false;
-                                    } else {
-                                        ventasSection.style.display = 'block';
-                                        comprasSection.style.display = 'none';
-                                        document.getElementById('compraSelect').required = false;
-                                        document.getElementById('ventaSelect').required = true;
-                                    }
-                                }
+                        if (tipoSelect.value === 'compra') {
+                            ventasSection.style.display = 'none';
+                            comprasSection.style.display = 'block';
+                            document.getElementById('compraSelect').required = true;
+                            document.getElementById('ventaSelect').required = false;
+                        } else {
+                            ventasSection.style.display = 'block';
+                            comprasSection.style.display = 'none';
+                            document.getElementById('compraSelect').required = false;
+                            document.getElementById('ventaSelect').required = true;
+                        }
+                    }
 
-                                function cargarDatosVenta() {
-                                    const select = document.getElementById('ventaSelect');
-                                    const option = select.options[select.selectedIndex];
+                    function cargarDatosVenta() {
+                        const select = document.getElementById('ventaSelect');
+                        const option = select.options[select.selectedIndex];
 
-                                    if (option.value) {
-                                        document.getElementById('id_producto').value = option.dataset.producto;
-                                        document.getElementById('id_lote').value = option.dataset.lote;
+                        if (option.value) {
+                            document.getElementById('id_producto').value = option.dataset.producto;
+                            document.getElementById('id_lote').value = option.dataset.lote;
 
-                                        const cantidadInput = document.getElementById('cantidad');
-                                        cantidadInput.max = option.dataset.cantidad;
-                                        cantidadInput.placeholder = `Máximo: ${option.dataset.cantidad}`;
-                                    }
-                                }
+                            const cantidadInput = document.getElementById('cantidad');
+                            cantidadInput.max = option.dataset.cantidad;
+                            cantidadInput.placeholder = `Máximo: ${option.dataset.cantidad}`;
+                        }
+                    }
 
-                                function cargarDatosCompra() {
-                                    const select = document.getElementById('compraSelect');
-                                    const option = select.options[select.selectedIndex];
+                    function cargarDatosCompra() {
+                        const select = document.getElementById('compraSelect');
+                        const option = select.options[select.selectedIndex];
 
-                                    if (option.value) {
-                                        document.getElementById('id_producto').value = option.dataset.producto;
-                                        document.getElementById('id_lote').value = option.dataset.lote;
+                        if (option.value) {
+                            document.getElementById('id_producto').value = option.dataset.producto;
+                            document.getElementById('id_lote').value = option.dataset.lote;
 
-                                        const cantidadInput = document.getElementById('cantidad');
-                                        cantidadInput.max = option.dataset.disponible;
-                                        cantidadInput.placeholder = `Máximo: ${option.dataset.disponible}`;
-                                    }
-                                }
+                            const cantidadInput = document.getElementById('cantidad');
+                            cantidadInput.max = option.dataset.disponible;
+                            cantidadInput.placeholder = `Máximo: ${option.dataset.disponible}`;
+                        }
+                    }
+                    function confirmarReversion() {
+                        return confirm('¡ADVERTENCIA!\n\n' +
+                                'Esta acción:\n' +
+                                '1. Restaurará el inventario al estado antes de las devoluciones\n' +
+                                '2. Eliminará todos los registros de devoluciones\n' +
+                                '3. Eliminará los movimientos relacionados con devoluciones\n\n' +
+                                'Las ventas y compras originales se mantendrán intactas.\n\n' +
+                                '¿Está seguro de que desea continuar?');
+                    }
 
-                                // Validación del formulario
-                                document.querySelector('form').addEventListener('submit', function (e) {
-                                    const tipoOperacion = document.getElementById('tipoSelect').value;
-                                    const cantidad = parseInt(document.getElementById('cantidad').value);
-                                    const maxCantidad = parseInt(document.getElementById('cantidad').max);
+                    // Validación del formulario
+                    document.querySelector('form').addEventListener('submit', function (e) {
+                        const tipoOperacion = document.getElementById('tipoSelect').value;
+                        const cantidad = parseInt(document.getElementById('cantidad').value);
+                        const maxCantidad = parseInt(document.getElementById('cantidad').max);
 
-                                    if (!document.getElementById('id_producto').value) {
-                                        e.preventDefault();
-                                        alert('Debe seleccionar una ' + (tipoOperacion === 'venta' ? 'venta' : 'compra'));
-                                        return;
-                                    }
+                        if (!document.getElementById('id_producto').value) {
+                            e.preventDefault();
+                            alert('Debe seleccionar una ' + (tipoOperacion === 'venta' ? 'venta' : 'compra'));
+                            return;
+                        }
 
-                                    if (!maxCantidad) {
-                                        e.preventDefault();
-                                        alert('Debe seleccionar un registro válido');
-                                        return;
-                                    }
+                        if (!maxCantidad) {
+                            e.preventDefault();
+                            alert('Debe seleccionar un registro válido');
+                            return;
+                        }
 
-                                    if (cantidad <= 0) {
-                                        e.preventDefault();
-                                        alert('La cantidad debe ser mayor a 0');
-                                        return;
-                                    }
+                        if (cantidad <= 0) {
+                            e.preventDefault();
+                            alert('La cantidad debe ser mayor a 0');
+                            return;
+                        }
 
-                                    if (cantidad > maxCantidad) {
-                                        e.preventDefault();
-                                        alert('La cantidad no puede ser mayor a ' + maxCantidad);
-                                        return;
-                                    }
+                        if (cantidad > maxCantidad) {
+                            e.preventDefault();
+                            alert('La cantidad no puede ser mayor a ' + maxCantidad);
+                            return;
+                        }
 
-                                    const razon = document.getElementById('razon').value.trim();
-                                    if (!razon) {
-                                        e.preventDefault();
-                                        alert('Debe especificar una razón para la devolución');
-                                        return;
-                                    }
+                        const razon = document.getElementById('razon').value.trim();
+                        if (!razon) {
+                            e.preventDefault();
+                            alert('Debe especificar una razón para la devolución');
+                            return;
+                        }
 
-                                    // Confirmar la operación
-                                    if (!confirm('¿Está seguro de registrar esta devolución de ' + tipoOperacion + '?')) {
-                                        e.preventDefault();
-                                        return;
-                                    }
-                                });
+                        // Confirmar la operación
+                        if (!confirm('¿Está seguro de registrar esta devolución de ' + tipoOperacion + '?')) {
+                            e.preventDefault();
+                            return;
+                        }
+                    });
         </script>
     </body>
 </html>

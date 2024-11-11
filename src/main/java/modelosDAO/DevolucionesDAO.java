@@ -400,4 +400,64 @@ public class DevolucionesDAO {
             }
         }
     }
+
+    public boolean revertirDevoluciones() {
+        try {
+            con.setAutoCommit(false);
+
+            // 1. Restaurar cantidades afectadas por las devoluciones
+            String sqlRestaurarCantidades
+                    = "UPDATE lote_inventario li "
+                    + "JOIN ( "
+                    + "    SELECT d.id_lote, "
+                    + "    SUM(CASE "
+                    + "        WHEN d.tipo_devolucion = 'venta' AND d.tipo_devolucion != 'defectuoso' THEN -d.cantidad "
+                    + // Quita lo que se devolvió en buen estado
+                    "        WHEN d.tipo_devolucion = 'compra' THEN d.cantidad "
+                    + // Restaura lo que se devolvió al proveedor
+                    "        ELSE 0 END"
+                    + "    ) as cantidad_ajuste "
+                    + "    FROM devoluciones d "
+                    + "    GROUP BY d.id_lote "
+                    + ") ajustes ON li.id_lote = ajustes.id_lote "
+                    + "SET li.cantidad_disponible = li.cantidad_disponible + ajustes.cantidad_ajuste";
+
+            // 2. Eliminar registros de movimientos relacionados con devoluciones
+            String sqlEliminarMovimientos
+                    = "DELETE FROM movimientos_inventario WHERE tipo_movimiento = 'devolucion'";
+
+            // 3. Eliminar todas las devoluciones
+            String sqlEliminarDevoluciones = "DELETE FROM devoluciones";
+
+            // Ejecutar las consultas en orden
+            try (Statement stmt = con.createStatement()) {
+                // Primero restaurar cantidades
+                stmt.executeUpdate(sqlRestaurarCantidades);
+
+                // Luego eliminar movimientos
+                stmt.executeUpdate(sqlEliminarMovimientos);
+
+                // Finalmente eliminar devoluciones
+                stmt.executeUpdate(sqlEliminarDevoluciones);
+            }
+
+            con.commit();
+            return true;
+
+        } catch (SQLException e) {
+            try {
+                con.rollback();
+            } catch (SQLException ex) {
+                System.err.println("Error en rollback: " + ex.getMessage());
+            }
+            System.err.println("Error al revertir devoluciones: " + e.getMessage());
+            return false;
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.err.println("Error al restablecer autocommit: " + e.getMessage());
+            }
+        }
+    }
 }
