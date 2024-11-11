@@ -55,8 +55,18 @@ public class ComprasServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // processRequest(request, response);
+        String mensaje = (String) request.getSession().getAttribute("mensaje");
+        String tipoMensaje = (String) request.getSession().getAttribute("tipoMensaje");
+
+        if (mensaje != null) {
+            request.setAttribute("mensaje", mensaje);
+            request.setAttribute("tipoMensaje", tipoMensaje);
+            // Limpiar mensajes de la sesión
+            request.getSession().removeAttribute("mensaje");
+            request.getSession().removeAttribute("tipoMensaje");
+        }
+
         listarCompras(request);
-        // Redirigir al formulario
         request.getRequestDispatcher("compras.jsp").forward(request, response);
     }
 
@@ -66,6 +76,7 @@ public class ComprasServlet extends HttpServlet {
         //processRequest(request, response);
         String action = request.getParameter("action");
         String mensaje = "";
+        String tipoMensaje = "success"; // valor por defecto
 
         try {
             ComprasDAO comprasDAO = new ComprasDAO();
@@ -75,7 +86,6 @@ public class ComprasServlet extends HttpServlet {
                 int cantidad = Integer.parseInt(request.getParameter("cantidad"));
                 double costoUnitario = Double.parseDouble(request.getParameter("costo_unitario"));
 
-                // Crear objetos para compra y lote
                 Compras compra = new Compras();
                 compra.setId_producto(idProducto);
                 compra.setCantidad(cantidad);
@@ -85,32 +95,39 @@ public class ComprasServlet extends HttpServlet {
                 lote.setId_producto(idProducto);
                 lote.setCosto_unitario(costoUnitario);
 
-                // Registrar la compra y el lote
                 boolean exito = comprasDAO.registrarCompraYCrearLote(compra, lote);
                 if (exito) {
                     mensaje = "Compra registrada exitosamente";
-                    request.setAttribute("tipoMensaje", "success");
+                    tipoMensaje = "success";
                 } else {
                     mensaje = "Error: No se puede registrar la compra porque no existe un inventario inicial. Debe registrar primero el inventario inicial.";
-                    request.setAttribute("tipoMensaje", "danger");
+                    tipoMensaje = "danger";
                 }
-            } 
-            else if ("delete".equals(action)) {
-                // Eliminar una compra
+            } else if ("delete".equals(action)) {
                 int idCompra = Integer.parseInt(request.getParameter("id_compra"));
                 int idLote = Integer.parseInt(request.getParameter("id_lote"));
                 boolean exito = comprasDAO.eliminarCompraYRelacionados(idCompra, idLote);
-                mensaje = exito ? "Compra eliminada exitosamente" : "Error al eliminar la compra";
+
+                if (exito) {
+                    mensaje = "Compra eliminada exitosamente";
+                    tipoMensaje = "success";
+                } else {
+                    mensaje = "Error al eliminar la compra";
+                    tipoMensaje = "danger";
+                }
             }
 
         } catch (Exception e) {
             mensaje = "Error al procesar la solicitud: " + e.getMessage();
+            tipoMensaje = "danger";
         }
 
-        // Listar nuevamente y redirigir
-        listarCompras(request);
-        request.setAttribute("mensaje", mensaje);
-        request.getRequestDispatcher("compras.jsp").forward(request, response);
+        // Guardar mensaje y tipo en la sesión
+        request.getSession().setAttribute("mensaje", mensaje);
+        request.getSession().setAttribute("tipoMensaje", tipoMensaje);
+
+        // Redireccionar a GET
+        response.sendRedirect("ComprasServlet");
     }
 
     // Método para cargar las listas de compras

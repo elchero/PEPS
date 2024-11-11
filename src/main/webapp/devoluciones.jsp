@@ -42,7 +42,7 @@
                                             data-nombre="${venta.nombre_producto}">
                                         Venta #${venta.id_venta} - ${venta.nombre_producto} - 
                                         Disponible para devolución: ${venta.cantidad}
-                                        (<fmt:formatDate value="${venta.fecha_venta}" pattern="dd/MM/yyyy"/>)
+                                        (<fmt:formatDate value="${venta.fecha_venta}" pattern="dd/MM/yyyy '-' HH:mm:ss"/>)
                                     </option>
                                 </c:forEach>
                             </select>
@@ -66,8 +66,7 @@
                                             data-nombre="${compra.nombre_producto}">
                                         Compra #${compra.id_compra} - ${compra.nombre_producto} - 
                                         Disponible: ${compra.cantidad_disponible} - 
-                                        Fecha: <fmt:formatDate value="${compra.fecha_compra}" pattern="dd/MM/yyyy"/>
-                                        - Por orden PEPS
+                                        Fecha: <fmt:formatDate value="${compra.fecha_compra}" pattern="dd/MM/yyyy '-' HH:mm:ss"/>                                 
                                     </option>
                                 </c:forEach>
                             </select>

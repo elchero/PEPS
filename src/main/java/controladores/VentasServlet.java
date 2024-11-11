@@ -59,6 +59,17 @@ public class VentasServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         //processRequest(request, response);
+        String mensaje = (String) request.getSession().getAttribute("mensaje");
+        String tipoMensaje = (String) request.getSession().getAttribute("tipoMensaje");
+
+        if (mensaje != null) {
+            request.setAttribute("mensaje", mensaje);
+            request.setAttribute("tipoMensaje", tipoMensaje);
+            // Limpiar mensajes de la sesión
+            request.getSession().removeAttribute("mensaje");
+            request.getSession().removeAttribute("tipoMensaje");
+        }
+
         listarVentas(request);
         request.getRequestDispatcher("ventas.jsp").forward(request, response);
     }
@@ -88,6 +99,7 @@ public class VentasServlet extends HttpServlet {
 
                 if (exito) {
                     mensaje = "Venta registrada exitosamente";
+                    tipoMensaje = "success";
                 } else {
                     mensaje = "Error al registrar la venta. Verifique el stock disponible.";
                     tipoMensaje = "danger";
@@ -98,6 +110,7 @@ public class VentasServlet extends HttpServlet {
 
                 if (exito) {
                     mensaje = "Venta eliminada exitosamente y stock restaurado";
+                    tipoMensaje = "success";
                 } else {
                     mensaje = "Error al eliminar la venta";
                     tipoMensaje = "danger";
@@ -108,10 +121,12 @@ public class VentasServlet extends HttpServlet {
             tipoMensaje = "danger";
         }
 
-        listarVentas(request);
-        request.setAttribute("mensaje", mensaje);
-        request.setAttribute("tipoMensaje", tipoMensaje);
-        request.getRequestDispatcher("ventas.jsp").forward(request, response);
+        // Guardar mensaje y tipo en la sesión
+        request.getSession().setAttribute("mensaje", mensaje);
+        request.getSession().setAttribute("tipoMensaje", tipoMensaje);
+
+        // Redireccionar a GET
+        response.sendRedirect("VentasServlet");
     }
 
     private void listarVentas(HttpServletRequest request) {

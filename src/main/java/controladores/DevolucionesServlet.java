@@ -59,7 +59,18 @@ public class DevolucionesServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        //processRequest(request, response);
+        // Recuperar mensaje y tipo de mensaje de la sesión
+        String mensaje = (String) request.getSession().getAttribute("mensaje");
+        String tipoMensaje = (String) request.getSession().getAttribute("tipoMensaje");
+
+        if (mensaje != null) {
+            request.setAttribute("mensaje", mensaje);
+            request.setAttribute("tipoMensaje", tipoMensaje);
+            // Limpiar mensajes de la sesión
+            request.getSession().removeAttribute("mensaje");
+            request.getSession().removeAttribute("tipoMensaje");
+        }
+
         listarDevoluciones(request);
         request.getRequestDispatcher("devoluciones.jsp").forward(request, response);
     }
@@ -105,16 +116,15 @@ public class DevolucionesServlet extends HttpServlet {
                 devolucion.setRazon(razon);
                 devolucion.setTipo_devolucion(tipoDevolucion);
 
-                boolean exito;
                 try {
+                    boolean exito;
                     if ("venta".equals(tipoOperacion)) {
                         exito = devolucionesDAO.registrarDevolucion(devolucion, tipoDevolucion);
                         if (exito) {
                             mensaje = "Devolución de venta registrada exitosamente";
                         } else {
                             tipoMensaje = "danger";
-                            mensaje = "Error al registrar la devolución de venta. "
-                                    + "Verifique que se cumplan las reglas PEPS y las cantidades sean correctas";
+                            mensaje = "Error al registrar la devolución de venta. Verifique que se cumplan las reglas PEPS y las cantidades sean correctas";
                         }
                     } else {
                         exito = devolucionesDAO.registrarDevolucionCompra(devolucion);
@@ -122,13 +132,11 @@ public class DevolucionesServlet extends HttpServlet {
                             mensaje = "Devolución de compra registrada exitosamente";
                         } else {
                             tipoMensaje = "danger";
-                            mensaje = "Error al registrar la devolución de compra. "
-                                    + "Verifique que se cumplan las reglas PEPS y las cantidades sean correctas";
+                            mensaje = "Error al registrar la devolución de compra. Verifique que se cumplan las reglas PEPS y las cantidades sean correctas";
                         }
                     }
                 } catch (Exception e) {
                     tipoMensaje = "danger";
-                    // Analizamos el mensaje de error para dar una respuesta más específica
                     String errorMessage = e.getMessage().toLowerCase();
                     if (errorMessage.contains("peps")) {
                         mensaje = "No se puede procesar la devolución: " + e.getMessage();
@@ -152,10 +160,12 @@ public class DevolucionesServlet extends HttpServlet {
             tipoMensaje = "danger";
         }
 
-        listarDevoluciones(request);
-        request.setAttribute("mensaje", mensaje);
-        request.setAttribute("tipoMensaje", tipoMensaje);
-        request.getRequestDispatcher("devoluciones.jsp").forward(request, response);
+        // Guardar mensaje y tipo en la sesión
+        request.getSession().setAttribute("mensaje", mensaje);
+        request.getSession().setAttribute("tipoMensaje", tipoMensaje);
+
+        // Redireccionar a GET
+        response.sendRedirect("DevolucionesServlet");
     }
 
     private void listarDevoluciones(HttpServletRequest request) {
