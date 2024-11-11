@@ -1,17 +1,18 @@
 package modelos;
 
-import java.sql.Date;
+import java.sql.Timestamp;
 
 public class Devoluciones {
 
     private int id_devolucion, id_producto, id_lote, cantidad;
     private String tipo_devolucion, razon;
-    private Date fecha_devolucion;
+    private Timestamp fecha_devolucion;
+    private String nombre_producto; 
 
     public Devoluciones() {
     }
 
-    public Devoluciones(int id_devolucion, int id_producto, int id_lote, int cantidad, String tipo_devolucion, String razon, Date fecha_devolucion) {
+    public Devoluciones(int id_devolucion, int id_producto, int id_lote, int cantidad, String tipo_devolucion, String razon, Timestamp fecha_devolucion) {
         this.id_devolucion = id_devolucion;
         this.id_producto = id_producto;
         this.id_lote = id_lote;
@@ -21,7 +22,7 @@ public class Devoluciones {
         this.fecha_devolucion = fecha_devolucion;
     }
 
-    public Devoluciones(int id_producto, int id_lote, int cantidad, String tipo_devolucion, String razon, Date fecha_devolucion) {
+    public Devoluciones(int id_producto, int id_lote, int cantidad, String tipo_devolucion, String razon, Timestamp fecha_devolucion) {
         this.id_producto = id_producto;
         this.id_lote = id_lote;
         this.cantidad = cantidad;
@@ -78,12 +79,19 @@ public class Devoluciones {
         this.razon = razon;
     }
 
-    public Date getFecha_devolucion() {
+    public Timestamp getFecha_devolucion() {
         return fecha_devolucion;
     }
 
-    public void setFecha_devolucion(Date fecha_devolucion) {
+    public void setFecha_devolucion(Timestamp fecha_devolucion) {
         this.fecha_devolucion = fecha_devolucion;
     }
 
+    public String getNombre_producto() {
+        return nombre_producto;
+    }
+
+    public void setNombre_producto(String nombre_producto) {
+        this.nombre_producto = nombre_producto;
+    }
 }
