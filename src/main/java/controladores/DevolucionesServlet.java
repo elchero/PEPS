@@ -2,6 +2,7 @@ package controladores;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.SQLException;
 import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -73,14 +74,21 @@ public class DevolucionesServlet extends HttpServlet {
 
         try {
             DevolucionesDAO devolucionesDAO = new DevolucionesDAO();
-
             if ("create".equals(action)) {
-                String tipoOperacion = request.getParameter("tipo_operacion"); // venta o compra
+                String tipoOperacion = request.getParameter("tipo_operacion");
                 int idProducto = Integer.parseInt(request.getParameter("id_producto"));
                 int idLote = Integer.parseInt(request.getParameter("id_lote"));
                 int cantidad = Integer.parseInt(request.getParameter("cantidad"));
-                String tipoDevolucion = request.getParameter("tipo_devolucion"); // normal o defectuoso
+                String tipoDevolucion = request.getParameter("tipo_devolucion");
                 String razon = request.getParameter("razon");
+
+                // Validaciones básicas
+                if (cantidad <= 0) {
+                    throw new IllegalArgumentException("La cantidad debe ser mayor a 0");
+                }
+                if (razon == null || razon.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Debe especificar una razón para la devolución");
+                }
 
                 Devoluciones devolucion = new Devoluciones();
                 devolucion.setId_producto(idProducto);
@@ -90,23 +98,46 @@ public class DevolucionesServlet extends HttpServlet {
                 devolucion.setTipo_devolucion(tipoDevolucion);
 
                 boolean exito;
-                if ("venta".equals(tipoOperacion)) {
-                    exito = devolucionesDAO.registrarDevolucion(devolucion, tipoDevolucion);
-                    mensaje = exito ? "Devolución de venta registrada exitosamente"
-                            : "Error al registrar la devolución de venta";
-                } else {
-                    exito = devolucionesDAO.registrarDevolucionCompra(devolucion);
-                    mensaje = exito ? "Devolución de compra registrada exitosamente"
-                            : "Error al registrar la devolución de compra";
-                }
-
-                if (!exito) {
+                try {
+                    if ("venta".equals(tipoOperacion)) {
+                        exito = devolucionesDAO.registrarDevolucion(devolucion, tipoDevolucion);
+                        if (exito) {
+                            mensaje = "Devolución de venta registrada exitosamente";
+                        } else {
+                            tipoMensaje = "danger";
+                            mensaje = "Error al registrar la devolución de venta. "
+                                    + "Verifique que se cumplan las reglas PEPS y las cantidades sean correctas";
+                        }
+                    } else {
+                        exito = devolucionesDAO.registrarDevolucionCompra(devolucion);
+                        if (exito) {
+                            mensaje = "Devolución de compra registrada exitosamente";
+                        } else {
+                            tipoMensaje = "danger";
+                            mensaje = "Error al registrar la devolución de compra. "
+                                    + "Verifique que se cumplan las reglas PEPS y las cantidades sean correctas";
+                        }
+                    }
+                } catch (Exception e) {
                     tipoMensaje = "danger";
+                    // Analizamos el mensaje de error para dar una respuesta más específica
+                    String errorMessage = e.getMessage().toLowerCase();
+                    if (errorMessage.contains("peps")) {
+                        mensaje = "No se puede procesar la devolución: " + e.getMessage();
+                    } else if (errorMessage.contains("cantidad")) {
+                        mensaje = "Error en las cantidades: " + e.getMessage();
+                    } else if (errorMessage.contains("lote")) {
+                        mensaje = "Error con el lote especificado: " + e.getMessage();
+                    } else {
+                        mensaje = "Error al procesar la devolución: " + e.getMessage();
+                    }
                 }
             }
-
         } catch (NumberFormatException e) {
             mensaje = "Error: Los datos ingresados no son válidos";
+            tipoMensaje = "danger";
+        } catch (IllegalArgumentException e) {
+            mensaje = e.getMessage();
             tipoMensaje = "danger";
         } catch (Exception e) {
             mensaje = "Error al procesar la solicitud: " + e.getMessage();
@@ -132,10 +163,9 @@ public class DevolucionesServlet extends HttpServlet {
             request.setAttribute("listaDevoluciones", devoluciones);
             request.setAttribute("ventasDisponibles", ventasDisponibles);
             request.setAttribute("comprasDisponibles", comprasDisponibles);
-
         } catch (Exception e) {
             System.err.println("Error al listar devoluciones: " + e.getMessage());
-            request.setAttribute("mensaje", "Error al cargar los datos");
+            request.setAttribute("mensaje", "Error al cargar los datos: " + e.getMessage());
             request.setAttribute("tipoMensaje", "danger");
         }
     }

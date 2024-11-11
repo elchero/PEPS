@@ -66,7 +66,7 @@
                         <td><fmt:formatNumber value="${compra.costo_unitario}" type="currency" currencySymbol="$" minFractionDigits="2" maxFractionDigits="2" groupingUsed="true" /></td>
                         <td><fmt:formatNumber value="${compra.costo_total}" type="currency" currencySymbol="$" minFractionDigits="2" maxFractionDigits="2" groupingUsed="true" /></td>
                         <td>${compra.cantidad_disponible}</td>
-                        <td><fmt:formatDate value="${compra.fecha_compra}" pattern="d'/'MMMM'/'yyyy" /></td>
+                        <td><fmt:formatDate value="${compra.fecha_compra}" pattern="d'/'MMMM'/'yyyy '-' HH:mm:ss" /></td>
                         <td>${compra.tipo_movimiento}</td>
                     </tr>
                 </c:forEach>

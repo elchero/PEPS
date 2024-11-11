@@ -41,11 +41,12 @@
                                             data-cantidad="${venta.cantidad}"
                                             data-nombre="${venta.nombre_producto}">
                                         Venta #${venta.id_venta} - ${venta.nombre_producto} - 
-                                        Cantidad: ${venta.cantidad}
+                                        Disponible para devolución: ${venta.cantidad}
                                         (<fmt:formatDate value="${venta.fecha_venta}" pattern="dd/MM/yyyy"/>)
                                     </option>
                                 </c:forEach>
                             </select>
+                            <small class="text-muted">Las ventas se muestran ordenadas por fecha de lote (PEPS)</small>
                         </div>
                     </div>
                 </div>
@@ -64,15 +65,16 @@
                                             data-disponible="${compra.cantidad_disponible}"
                                             data-nombre="${compra.nombre_producto}">
                                         Compra #${compra.id_compra} - ${compra.nombre_producto} - 
-                                        Disponible: ${compra.cantidad_disponible}
-                                        (<fmt:formatDate value="${compra.fecha_compra}" pattern="dd/MM/yyyy"/>)
+                                        Disponible: ${compra.cantidad_disponible} - 
+                                        Fecha: <fmt:formatDate value="${compra.fecha_compra}" pattern="dd/MM/yyyy"/>
+                                        - Por orden PEPS
                                     </option>
                                 </c:forEach>
                             </select>
+                            <small class="text-muted">Las compras se muestran ordenadas por fecha de compra (PEPS)</small>
                         </div>
                     </div>
                 </div>
-
                 <input type="hidden" name="id_producto" id="id_producto">
                 <input type="hidden" name="id_lote" id="id_lote">
 
@@ -131,14 +133,27 @@
                                 <td>${devolucion.id_lote}</td>
                                 <td>${devolucion.cantidad}</td>
                                 <td>
-                                    <span class="badge ${devolucion.tipo_devolucion eq 'compra' ? 'bg-info' : 'bg-primary'}">
-                                        ${devolucion.tipo_devolucion eq 'compra' ? 'Devolución Compra' : 'Devolución Venta'}
-                                    </span>
+                                    <c:choose>
+                                        <c:when test="${devolucion.tipo_operacion eq 'compra'}">
+                                            <span class="badge bg-info">Devolución Compra</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="badge bg-primary">Devolución Venta</span>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </td>
                                 <td>
-                                    <span class="badge ${devolucion.tipo_devolucion eq 'defectuoso' ? 'bg-danger' : 'bg-success'}">
-                                        ${devolucion.tipo_devolucion eq 'defectuoso' ? 'Defectuoso' : 'Buen estado'}
-                                    </span>
+                                    <c:choose>
+                                        <c:when test="${devolucion.tipo_devolucion eq 'defectuoso'}">
+                                            <span class="badge bg-danger">Defectuoso</span>
+                                        </c:when>
+                                        <c:when test="${devolucion.tipo_devolucion eq 'normal'}">
+                                            <span class="badge bg-success">Buen estado</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="badge bg-secondary">Estado no definido</span>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </td>
                                 <td>${devolucion.razon}</td>
                                 <td>
@@ -212,12 +227,19 @@
 
                                 // Validación del formulario
                                 document.querySelector('form').addEventListener('submit', function (e) {
+                                    const tipoOperacion = document.getElementById('tipoSelect').value;
                                     const cantidad = parseInt(document.getElementById('cantidad').value);
                                     const maxCantidad = parseInt(document.getElementById('cantidad').max);
 
                                     if (!document.getElementById('id_producto').value) {
                                         e.preventDefault();
-                                        alert('Debe seleccionar una venta o compra');
+                                        alert('Debe seleccionar una ' + (tipoOperacion === 'venta' ? 'venta' : 'compra'));
+                                        return;
+                                    }
+
+                                    if (!maxCantidad) {
+                                        e.preventDefault();
+                                        alert('Debe seleccionar un registro válido');
                                         return;
                                     }
 
@@ -229,13 +251,20 @@
 
                                     if (cantidad > maxCantidad) {
                                         e.preventDefault();
-                                        alert(`La cantidad no puede ser mayor a ${maxCantidad}`);
+                                        alert('La cantidad no puede ser mayor a ' + maxCantidad);
                                         return;
                                     }
 
-                                    if (!document.getElementById('razon').value.trim()) {
+                                    const razon = document.getElementById('razon').value.trim();
+                                    if (!razon) {
                                         e.preventDefault();
                                         alert('Debe especificar una razón para la devolución');
+                                        return;
+                                    }
+
+                                    // Confirmar la operación
+                                    if (!confirm('¿Está seguro de registrar esta devolución de ' + tipoOperacion + '?')) {
+                                        e.preventDefault();
                                         return;
                                     }
                                 });
