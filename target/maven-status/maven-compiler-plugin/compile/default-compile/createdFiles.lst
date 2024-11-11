@@ -17,9 +17,11 @@ modelos\Devoluciones.class
 modelosDAO\DevolucionesDAO.class
 controladores\inventarioInfoServlet.class
 db\cn.class
+modelosDAO\HistorialDAO.class
 modelosDAO\InventarioInicialDAO.class
 controladores\DevolucionesServlet.class
 otras_funcionalidades\LoteDisponible.class
 otras_funcionalidades\CompraDevolucion.class
 modelosDAO\ProductosDAO.class
 modelosDAO\ComprasDAO.class
+modelos\HistorialServlet.class
