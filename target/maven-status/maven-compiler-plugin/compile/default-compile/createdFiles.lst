@@ -20,5 +20,6 @@ db\cn.class
 modelosDAO\InventarioInicialDAO.class
 controladores\DevolucionesServlet.class
 otras_funcionalidades\LoteDisponible.class
+otras_funcionalidades\CompraDevolucion.class
 modelosDAO\ProductosDAO.class
 modelosDAO\ComprasDAO.class

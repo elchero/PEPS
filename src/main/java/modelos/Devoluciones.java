@@ -8,6 +8,7 @@ public class Devoluciones {
     private String tipo_devolucion, razon;
     private Timestamp fecha_devolucion;
     private String nombre_producto; 
+    private String tipo_operacion;//Va fuuera de la bd es para otra funcionalidad
 
     public Devoluciones() {
     }
@@ -94,4 +95,13 @@ public class Devoluciones {
     public void setNombre_producto(String nombre_producto) {
         this.nombre_producto = nombre_producto;
     }
+
+    public String getTipo_operacion() {
+        return tipo_operacion;
+    }
+
+    public void setTipo_operacion(String tipo_operacion) {
+        this.tipo_operacion = tipo_operacion;
+    }
+    
 }

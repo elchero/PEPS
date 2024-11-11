@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import modelos.Devoluciones;
 import modelosDAO.DevolucionesDAO;
+import otras_funcionalidades.CompraDevolucion;
 import otras_funcionalidades.VentaDevolucion;
 
 /**
@@ -62,14 +63,6 @@ public class DevolucionesServlet extends HttpServlet {
         request.getRequestDispatcher("devoluciones.jsp").forward(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -82,10 +75,11 @@ public class DevolucionesServlet extends HttpServlet {
             DevolucionesDAO devolucionesDAO = new DevolucionesDAO();
 
             if ("create".equals(action)) {
+                String tipoOperacion = request.getParameter("tipo_operacion"); // venta o compra
                 int idProducto = Integer.parseInt(request.getParameter("id_producto"));
                 int idLote = Integer.parseInt(request.getParameter("id_lote"));
                 int cantidad = Integer.parseInt(request.getParameter("cantidad"));
-                String tipoDevolucion = request.getParameter("tipo_devolucion");
+                String tipoDevolucion = request.getParameter("tipo_devolucion"); // normal o defectuoso
                 String razon = request.getParameter("razon");
 
                 Devoluciones devolucion = new Devoluciones();
@@ -93,17 +87,27 @@ public class DevolucionesServlet extends HttpServlet {
                 devolucion.setId_lote(idLote);
                 devolucion.setCantidad(cantidad);
                 devolucion.setRazon(razon);
+                devolucion.setTipo_devolucion(tipoDevolucion);
 
-                boolean exito = devolucionesDAO.registrarDevolucion(devolucion, tipoDevolucion);
-
-                if (exito) {
-                    mensaje = "Devolución registrada exitosamente";
+                boolean exito;
+                if ("venta".equals(tipoOperacion)) {
+                    exito = devolucionesDAO.registrarDevolucion(devolucion, tipoDevolucion);
+                    mensaje = exito ? "Devolución de venta registrada exitosamente"
+                            : "Error al registrar la devolución de venta";
                 } else {
-                    mensaje = "Error al registrar la devolución";
+                    exito = devolucionesDAO.registrarDevolucionCompra(devolucion);
+                    mensaje = exito ? "Devolución de compra registrada exitosamente"
+                            : "Error al registrar la devolución de compra";
+                }
+
+                if (!exito) {
                     tipoMensaje = "danger";
                 }
             }
 
+        } catch (NumberFormatException e) {
+            mensaje = "Error: Los datos ingresados no son válidos";
+            tipoMensaje = "danger";
         } catch (Exception e) {
             mensaje = "Error al procesar la solicitud: " + e.getMessage();
             tipoMensaje = "danger";
@@ -118,13 +122,21 @@ public class DevolucionesServlet extends HttpServlet {
     private void listarDevoluciones(HttpServletRequest request) {
         try {
             DevolucionesDAO devolucionesDAO = new DevolucionesDAO();
+
+            // Obtener todas las listas necesarias
             List<Devoluciones> devoluciones = devolucionesDAO.listarDevoluciones();
             List<VentaDevolucion> ventasDisponibles = devolucionesDAO.obtenerVentasParaDevolucion();
+            List<CompraDevolucion> comprasDisponibles = devolucionesDAO.obtenerComprasParaDevolucion();
 
+            // Establecer todos los atributos
             request.setAttribute("listaDevoluciones", devoluciones);
             request.setAttribute("ventasDisponibles", ventasDisponibles);
+            request.setAttribute("comprasDisponibles", comprasDisponibles);
+
         } catch (Exception e) {
             System.err.println("Error al listar devoluciones: " + e.getMessage());
+            request.setAttribute("mensaje", "Error al cargar los datos");
+            request.setAttribute("tipoMensaje", "danger");
         }
     }
 
