@@ -5,6 +5,7 @@ otras_funcionalidades\VentaDevolucion.class
 modelos\Movimientos_inventario.class
 controladores\VentasServlet.class
 modelos\Ventas.class
+controladores\HistorialServlet.class
 modelos\Productos.class
 modelos\Lotes.class
 modelosDAO\VentasDAO.class
@@ -24,4 +25,3 @@ otras_funcionalidades\LoteDisponible.class
 otras_funcionalidades\CompraDevolucion.class
 modelosDAO\ProductosDAO.class
 modelosDAO\ComprasDAO.class
-modelos\HistorialServlet.class

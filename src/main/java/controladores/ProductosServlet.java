@@ -94,7 +94,7 @@ public class ProductosServlet extends HttpServlet {
             throws ServletException, IOException {
         List<Productos> listaProductos = productosDAO.listarProductos();
         request.setAttribute("listaProductos", listaProductos);
-        request.getRequestDispatcher("productos.jsp").forward(request, response);
+        request.getRequestDispatcher("/Vistas/productos.jsp").forward(request, response);
     }
 
     private void agregarProducto(HttpServletRequest request, HttpServletResponse response)
@@ -108,7 +108,7 @@ public class ProductosServlet extends HttpServlet {
         if (nombre == null || nombre.trim().isEmpty() || descripcion == null || descripcion.trim().isEmpty()
                 || proveedor == null || proveedor.trim().isEmpty() || precioStr == null || precioStr.trim().isEmpty()) {
             request.setAttribute("errorMessage", "Todos los campos son obligatorios.");
-            request.getRequestDispatcher("productos.jsp").forward(request, response);
+            request.getRequestDispatcher("/Vistas/productos.jsp").forward(request, response);
             return;
         }
 
@@ -120,7 +120,7 @@ public class ProductosServlet extends HttpServlet {
             }
         } catch (NumberFormatException e) {
             request.setAttribute("errorMessage", "Precio inválido: " + e.getMessage());
-            request.getRequestDispatcher("productos.jsp").forward(request, response);
+            request.getRequestDispatcher("/Vistas/productos.jsp").forward(request, response);
             return;
         }
 

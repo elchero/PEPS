@@ -40,6 +40,7 @@
     </style>
 </head>
 <body>
+    <jsp:include page="/nav/navbar.jsp"></jsp:include>
     <div class="container mt-5">
         <h1>Información Detalla Inventario</h1>
         <table class="table table-striped table-bordered">

@@ -9,6 +9,7 @@
         <title>Gestión de Productos</title>
     </head>
     <body>
+        <jsp:include page="/nav/navbar.jsp"></jsp:include>
         <div class="container mt-4">
             <h1 class="text-center">Gestión de Productos</h1>
 

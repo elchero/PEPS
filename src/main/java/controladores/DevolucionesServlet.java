@@ -72,7 +72,7 @@ public class DevolucionesServlet extends HttpServlet {
         }
 
         listarDevoluciones(request);
-        request.getRequestDispatcher("devoluciones.jsp").forward(request, response);
+        request.getRequestDispatcher("/Vistas/devoluciones.jsp").forward(request, response);
     }
 
     @Override

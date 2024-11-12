@@ -71,7 +71,7 @@ public class VentasServlet extends HttpServlet {
         }
 
         listarVentas(request);
-        request.getRequestDispatcher("ventas.jsp").forward(request, response);
+        request.getRequestDispatcher("/Vistas/ventas.jsp").forward(request, response);
     }
 
     @Override

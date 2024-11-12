@@ -1,4 +1,4 @@
-package modelos;
+package controladores;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -66,7 +66,7 @@ public class HistorialServlet extends HttpServlet {
             request.setAttribute("tipoMensaje", "danger");
         }
 
-        request.getRequestDispatcher("historial.jsp").forward(request, response);
+        request.getRequestDispatcher("/Vistas/historial.jsp").forward(request, response);
     }
 
     /**

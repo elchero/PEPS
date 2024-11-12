@@ -9,6 +9,7 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     </head>
     <body>
+        <jsp:include page="/nav/navbar.jsp"></jsp:include>
         <div class="container mt-4">
             <h2 class="text-center mb-4">Registro de Ventas</h2>
 

@@ -26,6 +26,7 @@
         </script>
     </head>
     <body>
+        <jsp:include page="/nav/navbar.jsp"></jsp:include>
         <div class="container mt-4">
 
             <h2 class="text-center mb-4">Registro de Compra</h2>

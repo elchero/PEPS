@@ -63,7 +63,7 @@ public class InventarioInicialServlet extends HttpServlet {
         }
 
         listarInventarioInicial(request);
-        request.getRequestDispatcher("inventario_inicial.jsp").forward(request, response);
+        request.getRequestDispatcher("/Vistas/inventario_inicial.jsp").forward(request, response);
     }
 
     @Override

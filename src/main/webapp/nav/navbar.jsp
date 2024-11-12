@@ -52,17 +52,17 @@
                             <a class="nav-link" href="${pageContext.request.contextPath}/index.jsp">Inicio</a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Depreciación
+                            <a class="nav-link dropdown-toggle"  role="button" data-bs-toggle="dropdown">
+                                PEPS
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/ControladorActivoCategoria">Activo Categoria</a></li>
-                                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/ControladorActivoFamilia">Familia Activo</a></li>
-                                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/ControladorActivo">Activo</a></li>
+                                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/ComprasServlet">Compra</a></li>
+                                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/VentasServlet">Venta</a></li>
+                                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/DevolucionesServlet">Devoluciones</a></li>
                             </ul>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="${pageContext.request.contextPath}/Vistas/asientoForm.jsp">Partida Doble</a>
+                            <a class="nav-link" href="${pageContext.request.contextPath}/HistorialServlet">Historial de movimientos</a>
                         </li>
                     </ul>
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0">

@@ -79,7 +79,7 @@ public class inventarioInfoServlet extends HttpServlet {
             request.setAttribute("listaCompras", listaCompras);
             
             // Redirigir a la JSP para mostrar la información
-            request.getRequestDispatcher("inventario_info.jsp").forward(request, response);
+            request.getRequestDispatcher("/Vistas/inventario_info.jsp").forward(request, response);
         }catch (ClassNotFoundException ex) {
             Logger.getLogger(inventarioInfoServlet.class.getName()).log(Level.SEVERE, null, ex);
         }
