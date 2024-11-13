@@ -56,7 +56,7 @@
     <body>
         <jsp:include page="/nav/navbar.jsp"></jsp:include>
         <div class="container mt-4">
-            <h2 class="text-center mb-4">Historial de Movimientos</h2>
+            <h2 class="text-center mb-4">Historial de Movimientos de Inventario</h2>
 
             <!-- Filtros -->
             <div class="row mb-4">

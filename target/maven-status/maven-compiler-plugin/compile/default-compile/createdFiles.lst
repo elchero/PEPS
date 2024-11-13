@@ -17,6 +17,7 @@ modelos\Reportes_inventario.class
 modelos\Devoluciones.class
 modelosDAO\DevolucionesDAO.class
 controladores\inventarioInfoServlet.class
+modelosDAO\InventarioInfoDAO.class
 db\cn.class
 modelosDAO\HistorialDAO.class
 modelosDAO\InventarioInicialDAO.class

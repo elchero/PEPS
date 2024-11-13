@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package controladores;
 
 import java.io.IOException;
@@ -17,12 +12,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import modelos.Compras;
-import modelosDAO.ComprasDAO;
+import modelosDAO.InventarioInfoDAO;
 
-/**
- *
- * @author magana
- */
 @WebServlet(name = "inventarioInfoServlet", urlPatterns = {"/inventarioInfoServlet"})
 public class inventarioInfoServlet extends HttpServlet {
 
@@ -66,10 +57,10 @@ public class inventarioInfoServlet extends HttpServlet {
             throws ServletException, IOException {
         try {
             // Inicializar el DAO de Compras
-            ComprasDAO comprasDAO = new ComprasDAO();
+            InventarioInfoDAO inventarioInfoDAO = new InventarioInfoDAO();
             
             // Obtener la lista de compras con todos los datos
-            List<Compras> listaCompras = comprasDAO.listarInventarioInfo();
+            List<Compras> listaCompras = inventarioInfoDAO.listarInventarioInfo();
                         // Verificar si la lista está vacía
             if (listaCompras.isEmpty()) {
                 System.out.println("No se encontraron compras.");
@@ -87,14 +78,6 @@ public class inventarioInfoServlet extends HttpServlet {
         
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
