@@ -26,20 +26,23 @@ public class HistorialDAO {
                 = // Compras
                 "SELECT 'COMPRA' as tipo_operacion, "
                 + "c.id_compra as id_operacion, p.nombre as nombre_producto, "
-                + "c.cantidad, l.costo_unitario, c.costo_total, "
+                + "c.cantidad, l.costo_unitario, (l.costo_unitario * 0.13) as iva, c.costo_total, "
                 + "NULL as razon, c.fecha_compra as fecha "
                 + "FROM compras c "
                 + "JOIN productos p ON c.id_producto = p.id_producto "
                 + "JOIN lotes l ON c.id_lote = l.id_lote "
                 + "UNION ALL "
-                + // Ventas
+                + // Ventas - Usando movimientos_inventario para obtener el costo real
                 "SELECT 'VENTA' as tipo_operacion, "
                 + "v.id_venta as id_operacion, p.nombre as nombre_producto, "
-                + "v.cantidad, v.precio_venta_unitario as costo_unitario, "
-                + "(v.cantidad * v.precio_venta_unitario) as costo_total, "
+                + "v.cantidad, mi.costo_unitario, mi.iva, "
+                + "(v.cantidad * mi.costo_unitario) as costo_total, "
                 + "NULL as razon, v.fecha_venta as fecha "
                 + "FROM ventas v "
                 + "JOIN productos p ON v.id_producto = p.id_producto "
+                + "JOIN movimientos_inventario mi ON mi.id_producto = v.id_producto "
+                + "AND mi.id_lote = v.id_lote "
+                + "AND mi.tipo_movimiento = 'venta' "
                 + "UNION ALL "
                 + // Devoluciones
                 "SELECT "
@@ -49,7 +52,7 @@ public class HistorialDAO {
                 + "   WHEN d.tipo_devolucion = 'defectuoso' THEN 'DEVOLUCIÓN DEFECTUOSO VENTA' "
                 + "END as tipo_operacion, "
                 + "d.id_devolucion as id_operacion, p.nombre as nombre_producto, "
-                + "d.cantidad, l.costo_unitario, "
+                + "d.cantidad, l.costo_unitario, (l.costo_unitario * 0.13) as iva, "
                 + "(d.cantidad * l.costo_unitario) as costo_total, "
                 + "d.razon, d.fecha_devolucion as fecha "
                 + "FROM devoluciones d "
@@ -65,6 +68,7 @@ public class HistorialDAO {
                 movimiento.put("nombreProducto", rs.getString("nombre_producto"));
                 movimiento.put("cantidad", rs.getInt("cantidad"));
                 movimiento.put("costoUnitario", rs.getDouble("costo_unitario"));
+                movimiento.put("iva", rs.getDouble("iva"));
                 movimiento.put("costoTotal", rs.getDouble("costo_total"));
                 movimiento.put("razon", rs.getString("razon"));
                 movimiento.put("fecha", rs.getTimestamp("fecha"));

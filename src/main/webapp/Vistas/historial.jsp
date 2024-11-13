@@ -55,43 +55,44 @@
     </head>
     <body>
         <jsp:include page="/nav/navbar.jsp"></jsp:include>
-        <div class="container mt-4">
-            <h2 class="text-center mb-4">Historial de Movimientos de Inventario</h2>
+            <div class="container mt-4">
+                <h2 class="text-center mb-4">Historial de Movimientos de Inventario</h2>
 
-            <!-- Filtros -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <select class="form-select" id="filtroTipo" onchange="filtrarHistorial()">
-                        <option value="">Todos los tipos</option>
-                        <option value="COMPRA">Compras</option>
-                        <option value="VENTA">Ventas</option>
-                        <option value="DEVOLUCIÓN">Devoluciones</option>
-                    </select>
+                <!-- Filtros -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <select class="form-select" id="filtroTipo" onchange="filtrarHistorial()">
+                            <option value="">Todos los tipos</option>
+                            <option value="COMPRA">Compras</option>
+                            <option value="VENTA">Ventas</option>
+                            <option value="DEVOLUCIÓN">Devoluciones</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" class="form-control" id="fechaDesde" onchange="filtrarHistorial()">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" class="form-control" id="fechaHasta" onchange="filtrarHistorial()">
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <input type="date" class="form-control" id="fechaDesde" onchange="filtrarHistorial()">
-                </div>
-                <div class="col-md-3">
-                    <input type="date" class="form-control" id="fechaHasta" onchange="filtrarHistorial()">
-                </div>
-            </div>
 
-            <!-- Tabla de Historial -->
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Tipo</th>
-                            <th>ID</th>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Costo Unitario</th>
-                            <th>Total</th>
-                            <th>Razón</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <!-- Tabla de Historial -->
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>ID</th>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Costo Unitario</th>
+                                <th>IVA</th>
+                                <th>Total</th>
+                                <th>Razón</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                         <c:forEach var="movimiento" items="${historialCompleto}">
                             <tr>
                                 <td>
@@ -108,6 +109,10 @@
                                 <td>${movimiento.cantidad}</td>
                                 <td>
                                     <fmt:formatNumber value="${movimiento.costoUnitario}" 
+                                                      type="currency" currencySymbol="$"/>
+                                </td>
+                                <td>
+                                    <fmt:formatNumber value="${movimiento.iva}" 
                                                       type="currency" currencySymbol="$"/>
                                 </td>
                                 <td>
@@ -148,37 +153,37 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 
         <script>
-                                                    const modal = new bootstrap.Modal(document.getElementById('razonModal'));
+                                    const modal = new bootstrap.Modal(document.getElementById('razonModal'));
 
-                                                    function mostrarRazon(razon) {
-                                                        document.getElementById('razonTexto').textContent = razon;
-                                                        modal.show();
-                                                    }
+                                    function mostrarRazon(razon) {
+                                        document.getElementById('razonTexto').textContent = razon;
+                                        modal.show();
+                                    }
 
-                                                    function filtrarHistorial() {
-                                                        const tipo = document.getElementById('filtroTipo').value;
-                                                        const desde = document.getElementById('fechaDesde').value;
-                                                        const hasta = document.getElementById('fechaHasta').value;
+                                    function filtrarHistorial() {
+                                        const tipo = document.getElementById('filtroTipo').value;
+                                        const desde = document.getElementById('fechaDesde').value;
+                                        const hasta = document.getElementById('fechaHasta').value;
 
-                                                        // Implementar filtrado de tabla
-                                                        const tabla = document.querySelector('table tbody');
-                                                        const filas = tabla.getElementsByTagName('tr');
+                                        // Implementar filtrado de tabla
+                                        const tabla = document.querySelector('table tbody');
+                                        const filas = tabla.getElementsByTagName('tr');
 
-                                                        for (let fila of filas) {
-                                                            let mostrar = true;
-                                                            const tipoCell = fila.cells[1].textContent.trim();
-                                                            const fecha = new Date(fila.cells[0].textContent);
+                                        for (let fila of filas) {
+                                            let mostrar = true;
+                                            const tipoCell = fila.cells[1].textContent.trim();
+                                            const fecha = new Date(fila.cells[0].textContent);
 
-                                                            if (tipo && !tipoCell.includes(tipo))
-                                                                mostrar = false;
-                                                            if (desde && fecha < new Date(desde))
-                                                                mostrar = false;
-                                                            if (hasta && fecha > new Date(hasta))
-                                                                mostrar = false;
+                                            if (tipo && !tipoCell.includes(tipo))
+                                                mostrar = false;
+                                            if (desde && fecha < new Date(desde))
+                                                mostrar = false;
+                                            if (hasta && fecha > new Date(hasta))
+                                                mostrar = false;
 
-                                                            fila.style.display = mostrar ? '' : 'none';
-                                                        }
-                                                    }
+                                            fila.style.display = mostrar ? '' : 'none';
+                                        }
+                                    }
         </script>
     </body>
 </html>
