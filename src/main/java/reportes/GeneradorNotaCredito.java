@@ -47,7 +47,7 @@ public class GeneradorNotaCredito {
     private void cargarDatosMonetarios() {
         try {
             if (devolucion.getTipo_operacion().equals("compra")) {
-                // Para devoluciones de compra, usar el costo del lote
+                // Para devoluciones de compra, usar el costo del lote y calcular IVA
                 String sql = "SELECT l.costo_unitario FROM lotes l WHERE l.id_lote = ?";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
                     ps.setInt(1, devolucion.getId_lote());
@@ -56,8 +56,12 @@ public class GeneradorNotaCredito {
                         this.precioUnitario = rs.getDouble("costo_unitario");
                     }
                 }
+                // Cálculo normal para compras
+                this.subtotal = this.precioUnitario * devolucion.getCantidad();
+                this.iva = this.subtotal * 0.13;
+                this.total = this.subtotal + this.iva;
             } else {
-                // Para devoluciones de venta, usar el precio de venta original
+                // Para devoluciones de venta, el precio ya incluye IVA
                 String sql = "SELECT precio_venta_unitario FROM ventas WHERE id_lote = ? AND id_producto = ? "
                         + "ORDER BY fecha_venta DESC LIMIT 1";
                 try (PreparedStatement ps = con.prepareStatement(sql)) {
@@ -68,11 +72,12 @@ public class GeneradorNotaCredito {
                         this.precioUnitario = rs.getDouble("precio_venta_unitario");
                     }
                 }
+                // Para ventas, el total es el precio con IVA incluido
+                this.total = this.precioUnitario * devolucion.getCantidad();
+                // Desglosar el IVA del total (precio con IVA / 1.13 = precio sin IVA)
+                this.subtotal = this.total / 1.13;
+                this.iva = this.total - this.subtotal;
             }
-
-            this.subtotal = this.precioUnitario * devolucion.getCantidad();
-            this.iva = this.subtotal * 0.13;
-            this.total = this.subtotal + this.iva;
         } catch (Exception e) {
             e.printStackTrace();
             this.precioUnitario = 0.0;
@@ -182,6 +187,7 @@ public class GeneradorNotaCredito {
         addSection("INFORMACIÓN DEL DOCUMENTO", document, headerFont);
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", new Locale("es", "PE"));
         DecimalFormat df = new DecimalFormat("#,##0.00");
+
         addParagraphWithLabel("No. Nota de Crédito: ", String.valueOf(devolucion.getId_devolucion()), document, headerFont, normalFont);
         addParagraphWithLabel("Fecha de Emisión: ", sdf.format(devolucion.getFecha_devolucion()), document, headerFont, normalFont);
         addParagraphWithLabel("Documento que Modifica: ", documentoOriginal, document, headerFont, normalFont);
@@ -230,9 +236,17 @@ public class GeneradorNotaCredito {
         totalsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalsTable.setSpacingBefore(20);
 
-        addTotalRow(totalsTable, "Subtotal:", "$/ " + df.format(subtotal));
-        addTotalRow(totalsTable, "IVA (13%):", "$/ " + df.format(iva));
-        addTotalRow(totalsTable, "Total:", "$/ " + df.format(total));
+        if (devolucion.getTipo_operacion().equals("venta")) {
+            // Para ventas, mostrar que el IVA está incluido
+            addTotalRow(totalsTable, "Total con IVA:", "$/ " + df.format(total));
+            addTotalRow(totalsTable, "   Subtotal:", "$/ " + df.format(subtotal));
+            addTotalRow(totalsTable, "   IVA (13%):", "$/ " + df.format(iva));
+        } else {
+            // Para compras, mostrar el desglose normal
+            addTotalRow(totalsTable, "Subtotal:", "$/ " + df.format(subtotal));
+            addTotalRow(totalsTable, "IVA (13%):", "$/ " + df.format(iva));
+            addTotalRow(totalsTable, "Total:", "$/ " + df.format(total));
+        }
 
         document.add(totalsTable);
 
@@ -336,9 +350,13 @@ public class GeneradorNotaCredito {
         labelCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
 
-        if (label.equals("Total:")) {
+        if (label.equals("Total:") || label.equals("Total con IVA:")) {
             labelCell.setBackgroundColor(new Color(240, 240, 240));
             valueCell.setBackgroundColor(new Color(240, 240, 240));
+            // Hacer el texto un poco más grande para el total
+            Font totalBoldFont = new Font(Font.HELVETICA, 11, Font.BOLD);
+            labelCell.setPhrase(new Phrase(label, totalBoldFont));
+            valueCell.setPhrase(new Phrase(value, totalBoldFont));
         }
 
         table.addCell(labelCell);
