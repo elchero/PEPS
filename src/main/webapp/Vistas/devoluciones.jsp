@@ -408,6 +408,7 @@
                                 <th><i class="fas fa-info-circle me-2"></i>Estado</th>
                                 <th><i class="fas fa-comment me-2"></i>Razón</th>
                                 <th><i class="fas fa-calendar me-2"></i>Fecha</th>
+                                <th><i class="fas fa-cogs me-2"></i>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -466,6 +467,14 @@
                                         <fmt:formatDate value="${devolucion.fecha_devolucion}" 
                                                         pattern="d/MMMM/yyyy - HH:mm:ss"/>
                                     </td>
+                                    <td>
+                                        <a href="DevolucionesServlet?action=generarNotaCredito&id=${devolucion.id_devolucion}" 
+                                           class="btn btn-sm btn-success"
+                                           title="Generar Nota de Crédito">
+                                            <i class="fas fa-file-pdf me-1"></i>
+                                            Nota de Crédito
+                                        </a>
+                                    </td>
                                 </tr>
                             </c:forEach>
                         </tbody>
@@ -473,7 +482,7 @@
                 </div>
             </div>
         </div>
-            <br>
+        <br>
 
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -580,7 +589,7 @@
                         const tipoOperacion = document.getElementById('tipoSelect').value;
                         const cantidad = parseInt(document.getElementById('cantidad').value);
                         const maxCantidad = parseInt(document.getElementById('cantidad').max);
-                        
+
                         if (!document.getElementById('id_producto').value) {
                             e.preventDefault();
                             alert('Debe seleccionar una ' + (tipoOperacion === 'venta' ? 'venta' : 'compra'));

@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.List;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import modelos.Devoluciones;
 import modelosDAO.DevolucionesDAO;
 import otras_funcionalidades.CompraDevolucion;
 import otras_funcionalidades.VentaDevolucion;
+import reportes.GeneradorNotaCredito;
 
 /**
  *
@@ -60,6 +62,21 @@ public class DevolucionesServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // Recuperar mensaje y tipo de mensaje de la sesión
+        String action = request.getParameter("action");
+
+        // Si hay una acción específica
+        if (action != null && !action.isEmpty()) {
+            switch (action) {
+                case "generarNotaCredito":
+                    generarNotaCredito(request, response);
+                    return; // Importante: retornar aquí para evitar la ejecución del código siguiente
+                default:
+                    // Manejar acción desconocida si es necesario
+                    break;
+            }
+        }
+
+        // Código existente para el caso por defecto
         String mensaje = (String) request.getSession().getAttribute("mensaje");
         String tipoMensaje = (String) request.getSession().getAttribute("tipoMensaje");
 
@@ -161,7 +178,7 @@ public class DevolucionesServlet extends HttpServlet {
         }
 
         // Guardar mensaje y tipo en la sesión
-            request.getSession().setAttribute("mensaje", mensaje);
+        request.getSession().setAttribute("mensaje", mensaje);
         request.getSession().setAttribute("tipoMensaje", tipoMensaje);
 
         // Redireccionar a GET
@@ -185,6 +202,43 @@ public class DevolucionesServlet extends HttpServlet {
             System.err.println("Error al listar devoluciones: " + e.getMessage());
             request.setAttribute("mensaje", "Error al cargar los datos: " + e.getMessage());
             request.setAttribute("tipoMensaje", "danger");
+        }
+    }
+
+    private void generarNotaCredito(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            int idDevolucion = Integer.parseInt(request.getParameter("id"));
+            DevolucionesDAO dao = new DevolucionesDAO();
+
+            // Obtener la devolución específica
+            List<Devoluciones> devoluciones = dao.listarDevoluciones();
+            Devoluciones devolucion = devoluciones.stream()
+                    .filter(d -> d.getId_devolucion() == idDevolucion)
+                    .findFirst()
+                    .orElseThrow(() -> new ServletException("Devolución no encontrada"));
+
+            // Generar el PDF
+            GeneradorNotaCredito generador = new GeneradorNotaCredito(devolucion);
+            byte[] pdfBytes = generador.generarPDF();
+
+            // Configurar la respuesta HTTP
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition",
+                    "attachment; filename=nota_credito_" + idDevolucion + ".pdf");
+            response.setContentLength(pdfBytes.length);
+
+            // Escribir el PDF en la respuesta
+            try (ServletOutputStream out = response.getOutputStream()) {
+                out.write(pdfBytes);
+                out.flush();
+            }
+
+        } catch (Exception e) {
+            // Manejar errores
+            request.setAttribute("mensaje", "Error al generar la nota de crédito: " + e.getMessage());
+            request.setAttribute("tipoMensaje", "danger");
+            request.getRequestDispatcher("/devoluciones/index.jsp").forward(request, response);
         }
     }
 

@@ -20,6 +20,7 @@ modelosDAO\DevolucionesDAO.class
 controladores\inventarioInfoServlet.class
 modelosDAO\InventarioInfoDAO.class
 db\cn.class
+reportes\GeneradorNotaCredito.class
 modelosDAO\HistorialDAO.class
 modelosDAO\InventarioInicialDAO.class
 controladores\DevolucionesServlet.class
