@@ -85,6 +85,7 @@
                                 <th>Tipo</th>
                                 <th>ID</th>
                                 <th>Producto</th>
+                                <th>Lote</th>  <!-- Nueva columna -->
                                 <th>Cantidad</th>
                                 <th>Costo Unitario</th>
                                 <th>IVA</th>
@@ -106,6 +107,7 @@
                                 </td>
                                 <td>${movimiento.idOperacion}</td>
                                 <td>${movimiento.nombreProducto}</td>
+                                <td>${movimiento.numeroLote}</td>  <!-- Nueva celda -->
                                 <td>${movimiento.cantidad}</td>
                                 <td>
                                     <fmt:formatNumber value="${movimiento.costoUnitario}" 

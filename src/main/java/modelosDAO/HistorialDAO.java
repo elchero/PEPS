@@ -27,6 +27,7 @@ public class HistorialDAO {
                 "SELECT 'COMPRA' as tipo_operacion,\n"
                 + "       c.id_compra as id_operacion,\n"
                 + "       p.nombre as nombre_producto,\n"
+                + "       CONCAT('Lote #', c.id_lote) as numero_lote,\n"
                 + "       c.cantidad,\n"
                 + "       l.costo_unitario,\n"
                 + "       (l.costo_unitario * 0.13) as iva,\n"
@@ -42,6 +43,7 @@ public class HistorialDAO {
                 + "SELECT 'VENTA' as tipo_operacion,\n"
                 + "       v.id_venta as id_operacion,\n"
                 + "       p.nombre as nombre_producto,\n"
+                + "       CONCAT('Lote #', v.id_lote) as numero_lote,\n"
                 + "       v.cantidad,\n"
                 + "       l.costo_unitario,\n"
                 + "       (l.costo_unitario * 0.13) as iva,\n"
@@ -62,6 +64,7 @@ public class HistorialDAO {
                 + "    END as tipo_operacion,\n"
                 + "    d.id_devolucion as id_operacion,\n"
                 + "    p.nombre as nombre_producto,\n"
+                + "    CONCAT('Lote #', d.id_lote) as numero_lote,\n"
                 + "    d.cantidad,\n"
                 + "    l.costo_unitario,\n"
                 + "    (l.costo_unitario * 0.13) as iva,\n"
@@ -80,6 +83,7 @@ public class HistorialDAO {
                 movimiento.put("tipoOperacion", rs.getString("tipo_operacion"));
                 movimiento.put("idOperacion", rs.getInt("id_operacion"));
                 movimiento.put("nombreProducto", rs.getString("nombre_producto"));
+                movimiento.put("numeroLote", rs.getString("numero_lote")); // Nuevo campo
                 movimiento.put("cantidad", rs.getInt("cantidad"));
                 movimiento.put("costoUnitario", rs.getDouble("costo_unitario"));
                 movimiento.put("iva", rs.getDouble("iva"));
@@ -91,7 +95,6 @@ public class HistorialDAO {
         } catch (SQLException e) {
             System.err.println("Error al obtener historial: " + e.getMessage());
         }
-
         return historial;
     }
 }
