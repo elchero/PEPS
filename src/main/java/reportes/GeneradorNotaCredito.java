@@ -3,15 +3,21 @@ package reportes;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
 import com.lowagie.text.pdf.draw.LineSeparator;
+import db.cn;
 import modelos.Devoluciones;
 import java.io.ByteArrayOutputStream;
 import java.awt.Color;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
 public class GeneradorNotaCredito {
 
+    private Connection con;
     private Devoluciones devolucion;
     private String nombreEmpresa = "DevConta S.A.";
     private String rucEmpresa = "20505688516";
@@ -19,8 +25,103 @@ public class GeneradorNotaCredito {
     private String telefonoEmpresa = "(01) 555-1234";
     private String emailEmpresa = "devoluciones@devconta.com";
 
-    public GeneradorNotaCredito(Devoluciones devolucion) {
+    // Variables para los cálculos
+    private double precioUnitario;
+    private double subtotal;
+    private double iva;
+    private double total;
+    private String documentoOriginal;
+    private String fechaOriginal;
+    private String proveedor;
+
+    public GeneradorNotaCredito(Devoluciones devolucion) throws ClassNotFoundException {
         this.devolucion = devolucion;
+        cn conexion = new cn();
+        this.con = conexion.getCon();
+        cargarDatosMonetarios();
+        cargarDatosOperacionOriginal();
+    }
+
+    private void cargarDatosMonetarios() {
+        try {
+            if (devolucion.getTipo_operacion().equals("compra")) {
+                // Para devoluciones de compra, usar el costo del lote
+                String sql = "SELECT l.costo_unitario FROM lotes l WHERE l.id_lote = ?";
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, devolucion.getId_lote());
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        this.precioUnitario = rs.getDouble("costo_unitario");
+                    }
+                }
+            } else {
+                // Para devoluciones de venta, usar el precio de venta original
+                String sql = "SELECT precio_venta_unitario FROM ventas WHERE id_lote = ? AND id_producto = ? "
+                        + "ORDER BY fecha_venta DESC LIMIT 1";
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, devolucion.getId_lote());
+                    ps.setInt(2, devolucion.getId_producto());
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        this.precioUnitario = rs.getDouble("precio_venta_unitario");
+                    }
+                }
+            }
+
+            this.subtotal = this.precioUnitario * devolucion.getCantidad();
+            this.iva = this.subtotal * 0.13;
+            this.total = this.subtotal + this.iva;
+        } catch (Exception e) {
+            e.printStackTrace();
+            // En caso de error, usar valores predeterminados
+            this.precioUnitario = 0.0;
+            this.subtotal = 0.0;
+            this.iva = 0.0;
+            this.total = 0.0;
+        }
+    }
+
+    private void cargarDatosOperacionOriginal() {
+        try {
+            if (devolucion.getTipo_operacion().equals("compra")) {
+                String sql = "SELECT c.id_compra, c.fecha_compra, p.proveedor "
+                        + "FROM compras c "
+                        + "JOIN productos p ON c.id_producto = p.id_producto "
+                        + "WHERE c.id_lote = ? AND c.id_producto = ? "
+                        + "ORDER BY c.fecha_compra DESC LIMIT 1";
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, devolucion.getId_lote());
+                    ps.setInt(2, devolucion.getId_producto());
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        this.documentoOriginal = "Factura de Compra N° " + rs.getString("id_compra");
+                        this.fechaOriginal = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
+                                .format(rs.getTimestamp("fecha_compra"));
+                        this.proveedor = rs.getString("proveedor");
+                    }
+                }
+            } else {
+                String sql = "SELECT v.id_venta, v.fecha_venta "
+                        + "FROM ventas v "
+                        + "WHERE v.id_lote = ? AND v.id_producto = ? "
+                        + "ORDER BY v.fecha_venta DESC LIMIT 1";
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setInt(1, devolucion.getId_lote());
+                    ps.setInt(2, devolucion.getId_producto());
+                    ResultSet rs = ps.executeQuery();
+                    if (rs.next()) {
+                        this.documentoOriginal = "Factura de Venta N° " + rs.getString("id_venta");
+                        this.fechaOriginal = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
+                                .format(rs.getTimestamp("fecha_venta"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            this.documentoOriginal = "No disponible";
+            this.fechaOriginal = "No disponible";
+            this.proveedor = "No disponible";
+        }
     }
 
     public byte[] generarPDF() throws Exception {
@@ -36,33 +137,31 @@ public class GeneradorNotaCredito {
         document.addKeywords("nota de crédito, devolución, " + devolucion.getTipo_devolucion());
         document.addCreator("DevConta Sistema");
 
-        // Agregar logo (puedes reemplazar la ruta con tu logo)
+        // Logo
         try {
-            // Usar una URL directa para el logo
             String logoUrl = "https://firebasestorage.googleapis.com/v0/b/chatgram-4c6da.appspot.com/o/LogotransIndex.png?alt=media&token=b9c0500b-d054-4399-83b0-24080d296073";
             Image logo = Image.getInstance(new URL(logoUrl));
             logo.scaleToFit(150, 80);
             logo.setAlignment(Element.ALIGN_RIGHT);
             document.add(logo);
         } catch (Exception e) {
-            // Agregar un texto alternativo si el logo no está disponible
             Font logoFont = new Font(Font.HELVETICA, 18, Font.BOLD, new Color(44, 62, 80));
             Paragraph logoText = new Paragraph("DevConta", logoFont);
             logoText.setAlignment(Element.ALIGN_RIGHT);
             document.add(logoText);
         }
 
-        // Título principal
+        // Título y datos de empresa
         Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD, new Color(44, 62, 80));
+        Font headerFont = new Font(Font.HELVETICA, 12, Font.BOLD);
+        Font normalFont = new Font(Font.HELVETICA, 10, Font.NORMAL);
+
         Paragraph title = new Paragraph("NOTA DE CRÉDITO", titleFont);
         title.setAlignment(Element.ALIGN_CENTER);
         title.setSpacingAfter(20);
         document.add(title);
 
-        // Información de la empresa
-        Font headerFont = new Font(Font.HELVETICA, 12, Font.BOLD);
-        Font normalFont = new Font(Font.HELVETICA, 10, Font.NORMAL);
-
+        // Datos de la empresa
         addSection("DATOS DE LA EMPRESA", document, headerFont);
         addParagraphWithLabel("Empresa: ", nombreEmpresa, document, headerFont, normalFont);
         addParagraphWithLabel("RUC: ", rucEmpresa, document, headerFont, normalFont);
@@ -75,30 +174,60 @@ public class GeneradorNotaCredito {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", new Locale("es", "PE"));
         addParagraphWithLabel("No. Nota de Crédito: ", String.valueOf(devolucion.getId_devolucion()), document, headerFont, normalFont);
         addParagraphWithLabel("Fecha de Emisión: ", sdf.format(devolucion.getFecha_devolucion()), document, headerFont, normalFont);
-        addParagraphWithLabel("Tipo de Operación: ", devolucion.getTipo_operacion().toUpperCase(), document, headerFont, normalFont);
+        addParagraphWithLabel("Documento que Modifica: ", documentoOriginal, document, headerFont, normalFont);
+        addParagraphWithLabel("Fecha Doc. Original: ", fechaOriginal, document, headerFont, normalFont);
 
-        // Detalles del producto
+        // Datos del cliente o proveedor
+        if (devolucion.getTipo_operacion().equals("compra")) {
+            addSection("DATOS DEL PROVEEDOR", document, headerFont);
+            addParagraphWithLabel("Proveedor: ", proveedor, document, headerFont, normalFont);
+        } else {
+            addSection("DATOS DEL CLIENTE", document, headerFont);
+            addParagraphWithLabel("Cliente: ", "_________________________________", document, headerFont, normalFont);
+            addParagraphWithLabel("DNI/RUC: ", "_________________________________", document, headerFont, normalFont);
+            addParagraphWithLabel("Dirección: ", "_________________________________", document, headerFont, normalFont);
+        }
+
+        // Detalles de la devolución
         addSection("DETALLE DE LA DEVOLUCIÓN", document, headerFont);
-
-        // Crear tabla de detalles
-        PdfPTable table = new PdfPTable(5);
+        PdfPTable table = new PdfPTable(6);
         table.setWidthPercentage(100);
         table.setSpacingBefore(10f);
         table.setSpacingAfter(10f);
 
-        // Encabezados de la tabla
-        addTableHeader(table, new String[]{"Producto", "Lote", "Cantidad", "Estado", "Razón"});
+        // Encabezados y datos
+        DecimalFormat df = new DecimalFormat("#,##0.00");
+        addTableHeader(table, new String[]{
+            "Producto", "Lote", "Cantidad", "P.Unit", "Subtotal", "Estado"
+        });
 
-        // Datos de la devolución
         addTableRow(table, new String[]{
             devolucion.getNombre_producto(),
             String.valueOf(devolucion.getId_lote()),
             String.valueOf(devolucion.getCantidad()),
-            devolucion.getTipo_devolucion(),
-            devolucion.getRazon()
+            "S/ " + df.format(precioUnitario),
+            "S/ " + df.format(subtotal),
+            devolucion.getTipo_devolucion()
         });
 
         document.add(table);
+
+        // Totales
+        PdfPTable totalsTable = new PdfPTable(2);
+        totalsTable.setWidthPercentage(40);
+        totalsTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        totalsTable.setSpacingBefore(20);
+
+        addTotalRow(totalsTable, "Subtotal:", "$/ " + df.format(subtotal));
+        addTotalRow(totalsTable, "IVA (13%):", "$/ " + df.format(iva));
+        addTotalRow(totalsTable, "Total:", "$/ " + df.format(total));
+
+        document.add(totalsTable);
+
+        // Razón de devolución
+        addSection("RAZÓN DE LA DEVOLUCIÓN", document, headerFont);
+        Paragraph razon = new Paragraph(devolucion.getRazon(), normalFont);
+        document.add(razon);
 
         // Términos y condiciones
         addSection("TÉRMINOS Y CONDICIONES", document, headerFont);
@@ -109,14 +238,16 @@ public class GeneradorNotaCredito {
         terms.add(new Chunk("4. La restitución del valor se realizará según políticas de la empresa", normalFont));
         document.add(terms);
 
-        // Firmas
+        // Firmas con fecha
         addSection("FIRMAS", document, headerFont);
         PdfPTable signatures = new PdfPTable(2);
         signatures.setWidthPercentage(100);
         signatures.setSpacingBefore(50f);
 
-        PdfPCell cell1 = new PdfPCell(new Phrase("_____________________\nEmitido por", normalFont));
-        PdfPCell cell2 = new PdfPCell(new Phrase("_____________________\nRecibido por", normalFont));
+        PdfPCell cell1 = new PdfPCell(new Phrase(
+                "_____________________\nEmitido por\nFecha: ________________", normalFont));
+        PdfPCell cell2 = new PdfPCell(new Phrase(
+                "_____________________\nRecibido por\nFecha: ________________", normalFont));
 
         cell1.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell2.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -132,6 +263,7 @@ public class GeneradorNotaCredito {
         return baos.toByteArray();
     }
 
+    // Métodos auxiliares existentes...
     private void addSection(String title, Document document, Font headerFont) throws DocumentException {
         Paragraph section = new Paragraph(title, headerFont);
         section.setSpacingBefore(15);
@@ -166,6 +298,49 @@ public class GeneradorNotaCredito {
             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
             cell.setPadding(5);
             table.addCell(cell);
+        }
+    }
+
+    private void addTotalRow(PdfPTable table, String label, String value) {
+        Font totalFont = new Font(Font.HELVETICA, 10, Font.BOLD);
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, totalFont));
+        PdfPCell valueCell = new PdfPCell(new Phrase(value, totalFont));
+
+        labelCell.setBorder(Rectangle.NO_BORDER);
+        valueCell.setBorder(Rectangle.NO_BORDER);
+        labelCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        valueCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+
+        if (label.equals("Total:")) {
+            labelCell.setBackgroundColor(new Color(240, 240, 240));
+            valueCell.setBackgroundColor(new Color(240, 240, 240));
+        }
+
+        table.addCell(labelCell);
+        table.addCell(valueCell);
+    }
+
+    private String formatearEstado(String estado) {
+        switch (estado.toLowerCase()) {
+            case "defectuoso":
+                return "Producto Defectuoso";
+            case "venta":
+                return "Devolución de Venta";
+            case "compra":
+                return "Devolución de Compra";
+            default:
+                return estado;
+        }
+    }
+
+    // Método para limpiar la conexión
+    public void cerrarConexion() {
+        if (con != null) {
+            try {
+                con.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }
