@@ -33,6 +33,8 @@ public class GeneradorNotaCredito {
     private String documentoOriginal;
     private String fechaOriginal;
     private String proveedor;
+    private double montoOperacionOriginal;
+    private int cantidadOperacionOriginal;
 
     public GeneradorNotaCredito(Devoluciones devolucion) throws ClassNotFoundException {
         this.devolucion = devolucion;
@@ -73,7 +75,6 @@ public class GeneradorNotaCredito {
             this.total = this.subtotal + this.iva;
         } catch (Exception e) {
             e.printStackTrace();
-            // En caso de error, usar valores predeterminados
             this.precioUnitario = 0.0;
             this.subtotal = 0.0;
             this.iva = 0.0;
@@ -84,7 +85,7 @@ public class GeneradorNotaCredito {
     private void cargarDatosOperacionOriginal() {
         try {
             if (devolucion.getTipo_operacion().equals("compra")) {
-                String sql = "SELECT c.id_compra, c.fecha_compra, p.proveedor "
+                String sql = "SELECT c.id_compra, c.fecha_compra, c.cantidad, c.costo_total, p.proveedor "
                         + "FROM compras c "
                         + "JOIN productos p ON c.id_producto = p.id_producto "
                         + "WHERE c.id_lote = ? AND c.id_producto = ? "
@@ -98,10 +99,13 @@ public class GeneradorNotaCredito {
                         this.fechaOriginal = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
                                 .format(rs.getTimestamp("fecha_compra"));
                         this.proveedor = rs.getString("proveedor");
+                        this.cantidadOperacionOriginal = rs.getInt("cantidad");
+                        this.montoOperacionOriginal = rs.getDouble("costo_total");
                     }
                 }
             } else {
-                String sql = "SELECT v.id_venta, v.fecha_venta "
+                String sql = "SELECT v.id_venta, v.fecha_venta, v.cantidad, "
+                        + "(v.cantidad * v.precio_venta_unitario) as monto_total "
                         + "FROM ventas v "
                         + "WHERE v.id_lote = ? AND v.id_producto = ? "
                         + "ORDER BY v.fecha_venta DESC LIMIT 1";
@@ -113,6 +117,8 @@ public class GeneradorNotaCredito {
                         this.documentoOriginal = "Factura de Venta N° " + rs.getString("id_venta");
                         this.fechaOriginal = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
                                 .format(rs.getTimestamp("fecha_venta"));
+                        this.cantidadOperacionOriginal = rs.getInt("cantidad");
+                        this.montoOperacionOriginal = rs.getDouble("monto_total");
                     }
                 }
             }
@@ -121,6 +127,8 @@ public class GeneradorNotaCredito {
             this.documentoOriginal = "No disponible";
             this.fechaOriginal = "No disponible";
             this.proveedor = "No disponible";
+            this.cantidadOperacionOriginal = 0;
+            this.montoOperacionOriginal = 0.0;
         }
     }
 
@@ -131,7 +139,7 @@ public class GeneradorNotaCredito {
 
         document.open();
 
-        // Añadir metadatos
+        // Metadatos
         document.addTitle("Nota de Crédito - " + devolucion.getId_devolucion());
         document.addSubject("Nota de Crédito para devolución");
         document.addKeywords("nota de crédito, devolución, " + devolucion.getTipo_devolucion());
@@ -151,11 +159,12 @@ public class GeneradorNotaCredito {
             document.add(logoText);
         }
 
-        // Título y datos de empresa
+        // Título y fuentes
         Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD, new Color(44, 62, 80));
         Font headerFont = new Font(Font.HELVETICA, 12, Font.BOLD);
         Font normalFont = new Font(Font.HELVETICA, 10, Font.NORMAL);
 
+        // Título
         Paragraph title = new Paragraph("NOTA DE CRÉDITO", titleFont);
         title.setAlignment(Element.ALIGN_CENTER);
         title.setSpacingAfter(20);
@@ -172,10 +181,14 @@ public class GeneradorNotaCredito {
         // Información del documento
         addSection("INFORMACIÓN DEL DOCUMENTO", document, headerFont);
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", new Locale("es", "PE"));
+        DecimalFormat df = new DecimalFormat("#,##0.00");
         addParagraphWithLabel("No. Nota de Crédito: ", String.valueOf(devolucion.getId_devolucion()), document, headerFont, normalFont);
         addParagraphWithLabel("Fecha de Emisión: ", sdf.format(devolucion.getFecha_devolucion()), document, headerFont, normalFont);
         addParagraphWithLabel("Documento que Modifica: ", documentoOriginal, document, headerFont, normalFont);
         addParagraphWithLabel("Fecha Doc. Original: ", fechaOriginal, document, headerFont, normalFont);
+        addParagraphWithLabel("Cantidad Original: ", String.valueOf(cantidadOperacionOriginal), document, headerFont, normalFont);
+        addParagraphWithLabel("Monto Original: ", "$/ " + df.format(montoOperacionOriginal), document, headerFont, normalFont);
+        addParagraphWithLabel("Cantidad a Devolver: ", String.valueOf(devolucion.getCantidad()), document, headerFont, normalFont);
 
         // Datos del cliente o proveedor
         if (devolucion.getTipo_operacion().equals("compra")) {
@@ -195,8 +208,7 @@ public class GeneradorNotaCredito {
         table.setSpacingBefore(10f);
         table.setSpacingAfter(10f);
 
-        // Encabezados y datos
-        DecimalFormat df = new DecimalFormat("#,##0.00");
+        // Encabezados y datos de la tabla
         addTableHeader(table, new String[]{
             "Producto", "Lote", "Cantidad", "P.Unit", "Subtotal", "Estado"
         });
@@ -205,9 +217,9 @@ public class GeneradorNotaCredito {
             devolucion.getNombre_producto(),
             String.valueOf(devolucion.getId_lote()),
             String.valueOf(devolucion.getCantidad()),
-            "S/ " + df.format(precioUnitario),
-            "S/ " + df.format(subtotal),
-            devolucion.getTipo_devolucion()
+            "$/ " + df.format(precioUnitario),
+            "$/ " + df.format(subtotal),
+            formatearEstado(devolucion.getTipo_devolucion())
         });
 
         document.add(table);
@@ -229,16 +241,10 @@ public class GeneradorNotaCredito {
         Paragraph razon = new Paragraph(devolucion.getRazon(), normalFont);
         document.add(razon);
 
-        // Términos y condiciones
-        addSection("TÉRMINOS Y CONDICIONES", document, headerFont);
-        Paragraph terms = new Paragraph();
-        terms.add(new Chunk("1. Esta nota de crédito está sujeta a las disposiciones tributarias vigentes\n", normalFont));
-        terms.add(new Chunk("2. La devolución física de los productos debe realizarse en un plazo máximo de 7 días\n", normalFont));
-        terms.add(new Chunk("3. Los productos defectuosos serán evaluados por control de calidad\n", normalFont));
-        terms.add(new Chunk("4. La restitución del valor se realizará según políticas de la empresa", normalFont));
-        document.add(terms);
+        // Términos y condiciones específicos según el tipo de operación
+        agregarTerminosYCondiciones(document, headerFont, normalFont);
 
-        // Firmas con fecha
+        // Firmas
         addSection("FIRMAS", document, headerFont);
         PdfPTable signatures = new PdfPTable(2);
         signatures.setWidthPercentage(100);
@@ -263,7 +269,26 @@ public class GeneradorNotaCredito {
         return baos.toByteArray();
     }
 
-    // Métodos auxiliares existentes...
+    private void agregarTerminosYCondiciones(Document document, Font headerFont, Font normalFont) throws DocumentException {
+        addSection("TÉRMINOS Y CONDICIONES", document, headerFont);
+        Paragraph terms = new Paragraph();
+        terms.add(new Chunk("1. Esta nota de crédito está sujeta a las disposiciones tributarias vigentes\n", normalFont));
+
+        if (devolucion.getTipo_operacion().equals("venta")) {
+            terms.add(new Chunk("2. La devolución física de los productos debe realizarse en un plazo máximo de 7 días\n", normalFont));
+            terms.add(new Chunk("3. Los productos serán evaluados para verificar que cumplan con las condiciones de devolución\n", normalFont));
+            terms.add(new Chunk("4. Solo se aceptan devoluciones con el empaque original y en buen estado\n", normalFont));
+            terms.add(new Chunk("5. La restitución del valor se realizará según la forma de pago original\n", normalFont));
+        } else {
+            terms.add(new Chunk("2. La devolución al proveedor debe ser coordinada y autorizada previamente\n", normalFont));
+            terms.add(new Chunk("3. Los productos defectuosos deben ser documentados con evidencia fotográfica\n", normalFont));
+            terms.add(new Chunk("4. El proveedor debe emitir la nota de crédito correspondiente\n", normalFont));
+            terms.add(new Chunk("5. La compensación se realizará en la siguiente orden de compra o según acuerdo\n", normalFont));
+        }
+
+        document.add(terms);
+    }
+
     private void addSection(String title, Document document, Font headerFont) throws DocumentException {
         Paragraph section = new Paragraph(title, headerFont);
         section.setSpacingBefore(15);
