@@ -149,7 +149,7 @@
     <body>
         <nav class="navbar navbar-expand-lg navbar-custom">
             <div class="container-fluid">
-                <a class="navbar-brand" href="${pageContext.request.contextPath}/ControladorEmpresa">
+                <a class="navbar-brand" href="">
                     <img src="https://firebasestorage.googleapis.com/v0/b/chatgram-4c6da.appspot.com/o/logotrans3.png?alt=media&token=da1e3e81-28a6-4c90-9224-ffa062775208" 
                          alt="Logo DevConta" 
                          class="img-fluid">
@@ -174,6 +174,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="${pageContext.request.contextPath}/ProductosServlet">
                                 <i class="fas fa-box me-1"></i> Producto
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="${pageContext.request.contextPath}/inventarioInfoServlet">
+                                <i class="fas fa-warehouse me-1"></i> Ver inventario
                             </a>
                         </li>
                         <li class="nav-item dropdown">
@@ -218,8 +223,8 @@
 
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link" href="${pageContext.request.contextPath}/Vistas/preguntas.jsp">
-                                <i class="fas fa-question-circle me-1"></i> Preguntas Frecuentes
+                            <a class="nav-link" href="${pageContext.request.contextPath}/DashboardController">
+                                <i class="fas fa-chart-pie me-1"></i> Resumen de Inventario
                             </a>
                         </li>
                         <li class="nav-item">

@@ -2,6 +2,7 @@ com\devconta\gestioninventariopeps\resources\JakartaEE8Resource.class
 modelos\Lote_inventario.class
 controladores\InventarioInicialServlet.class
 otras_funcionalidades\VentaDevolucion.class
+controladores\DashboardController.class
 modelos\Movimientos_inventario.class
 controladores\VentasServlet.class
 modelos\Ventas.class
@@ -24,5 +25,7 @@ modelosDAO\InventarioInicialDAO.class
 controladores\DevolucionesServlet.class
 otras_funcionalidades\LoteDisponible.class
 otras_funcionalidades\CompraDevolucion.class
+modelosDAO\DashboardDAO.class
 modelosDAO\ProductosDAO.class
+otras_funcionalidades\Dashboard.class
 modelosDAO\ComprasDAO.class

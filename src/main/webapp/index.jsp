@@ -222,6 +222,13 @@
                         <p class="text-muted">Consulta el registro de operaciones</p>
                     </a>
                 </div>
+                <div class="option-card">
+                    <a href="${pageContext.request.contextPath}/DashboardController">
+                        <img src="https://firebasestorage.googleapis.com/v0/b/chatgram-4c6da.appspot.com/o/resumen.png?alt=media&token=f4227c9a-6860-4d8f-aefa-a95f27268abd" alt="Historial">
+                        <h3>Resumen de inventario</h3>
+                        <p class="text-muted">Consulta el resumen</p>
+                    </a>
+                </div>
             </div>
         </div>
 
