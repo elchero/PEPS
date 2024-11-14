@@ -10,6 +10,7 @@ controladores\HistorialServlet.class
 modelos\Productos.class
 modelos\Lotes.class
 modelosDAO\VentasDAO.class
+reportes\GeneradorOrdenCompra.class
 controladores\ProductosServlet.class
 controladores\ComprasServlet.class
 modelos\Compras.class

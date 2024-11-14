@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -12,6 +13,7 @@ import modelos.Compras;
 import modelos.Lotes;
 import modelos.Productos;
 import modelosDAO.ComprasDAO;
+import reportes.GeneradorOrdenCompra;
 
 @WebServlet(name = "ComprasServlet", urlPatterns = {"/ComprasServlet"})
 public class ComprasServlet extends HttpServlet {
@@ -55,13 +57,23 @@ public class ComprasServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // processRequest(request, response);
+        String action = request.getParameter("action");
+
+        // Si hay una acción específica
+        if (action != null && !action.isEmpty()) {
+            if ("generarOrden".equals(action)) {
+                generarOrdenCompra(request, response);
+                return; // Importante: retornar aquí para evitar la ejecución del código siguiente
+            }
+        }
+
+        // Código existente para el caso por defecto
         String mensaje = (String) request.getSession().getAttribute("mensaje");
         String tipoMensaje = (String) request.getSession().getAttribute("tipoMensaje");
 
         if (mensaje != null) {
             request.setAttribute("mensaje", mensaje);
             request.setAttribute("tipoMensaje", tipoMensaje);
-            // Limpiar mensajes de la sesión
             request.getSession().removeAttribute("mensaje");
             request.getSession().removeAttribute("tipoMensaje");
         }
@@ -141,6 +153,36 @@ public class ComprasServlet extends HttpServlet {
             request.setAttribute("listaProductos", listaProductos);
         } catch (Exception e) {
             System.err.println("Error al listar compras: " + e.getMessage());
+        }
+    }
+
+    private void generarOrdenCompra(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            int idCompra = Integer.parseInt(request.getParameter("id"));
+            ComprasDAO dao = new ComprasDAO();
+            List<Compras> compras = dao.listarCompras();
+
+            Compras compra = compras.stream()
+                    .filter(c -> c.getId_compra() == idCompra)
+                    .findFirst()
+                    .orElseThrow(() -> new ServletException("Compra no encontrada"));
+
+            GeneradorOrdenCompra generador = new GeneradorOrdenCompra(compra);
+            byte[] pdfBytes = generador.generarPDF();
+
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition",
+                    "attachment; filename=orden_compra_" + idCompra + ".pdf");
+            response.setContentLength(pdfBytes.length);
+
+            try (ServletOutputStream out = response.getOutputStream()) {
+                out.write(pdfBytes);
+                out.flush();
+            }
+
+        } catch (Exception e) {
+            request.setAttribute("mensaje", "Error al generar la orden de compra: " + e.getMessage());
         }
     }
 
