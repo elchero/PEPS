@@ -53,8 +53,8 @@ public class InventarioInicialDAO {
                 }
             }
 
-            // Registrar la compra
-            double costoTotal = compra.getCantidad() * (lote.getCosto_unitario() + iva); // Incluye IVA en el costo total
+            // Registrar la compra - Ahora el costo total es simplemente cantidad * costo unitario
+            double costoTotal = compra.getCantidad() * lote.getCosto_unitario();
             try (PreparedStatement psCompra = con.prepareStatement(sqlCompra)) {
                 psCompra.setInt(1, compra.getId_producto());
                 psCompra.setInt(2, compra.getId_lote());

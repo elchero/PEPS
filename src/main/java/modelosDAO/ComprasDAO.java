@@ -66,7 +66,7 @@ public class ComprasDAO {
             }
 
             // Registrar la compra
-            double costoTotal = compra.getCantidad() * (lote.getCosto_unitario() + iva);
+            double costoTotal = compra.getCantidad() * lote.getCosto_unitario();
             try (PreparedStatement psCompra = con.prepareStatement(sqlCompra)) {
                 psCompra.setInt(1, compra.getId_producto());
                 psCompra.setInt(2, compra.getId_lote());
