@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -12,6 +13,7 @@ import modelos.Productos;
 import modelos.Ventas;
 import modelosDAO.ProductosDAO;
 import modelosDAO.VentasDAO;
+import reportes.GeneradorReporteVentas;
 
 /**
  *
@@ -58,14 +60,58 @@ public class VentasServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        //processRequest(request, response);
+        String action = request.getParameter("action");
+
+        // Si hay una acción específica
+        if (action != null && !action.isEmpty()) {
+            if ("generarBoleta".equals(action)) {
+                try {
+                    int idVenta = Integer.parseInt(request.getParameter("id"));
+
+                    // Crear una instancia de VentasDAO
+                    VentasDAO ventasDAO = new VentasDAO();
+                    Ventas venta = ventasDAO.obtenerVentaPorId(idVenta);
+
+                    // Generar la boleta
+                    GeneradorReporteVentas generador = null;
+                    try {
+                        generador = new GeneradorReporteVentas(venta);
+                        byte[] pdfBytes = generador.generarPDF();
+
+                        // Configurar la respuesta HTTP
+                        response.setContentType("application/pdf");
+                        response.setHeader("Content-Disposition",
+                                "attachment; filename=boleta_venta_" + idVenta + ".pdf");
+                        response.setContentLength(pdfBytes.length);
+
+                        // Enviar el PDF
+                        try (ServletOutputStream out = response.getOutputStream()) {
+                            out.write(pdfBytes);
+                            out.flush();
+                        }
+                    } finally {
+                        if (generador != null) {
+                            generador.cerrarConexion();
+                        }
+                    }
+                    return;
+                } catch (Exception e) {
+                    request.getSession().setAttribute("mensaje",
+                            "Error al generar la boleta: " + e.getMessage());
+                    request.getSession().setAttribute("tipoMensaje", "danger");
+                    response.sendRedirect("VentasServlet");
+                    return;
+                }
+            }
+        }
+
+        // Código existente para el caso por defecto
         String mensaje = (String) request.getSession().getAttribute("mensaje");
         String tipoMensaje = (String) request.getSession().getAttribute("tipoMensaje");
 
         if (mensaje != null) {
             request.setAttribute("mensaje", mensaje);
             request.setAttribute("tipoMensaje", tipoMensaje);
-            // Limpiar mensajes de la sesión
             request.getSession().removeAttribute("mensaje");
             request.getSession().removeAttribute("tipoMensaje");
         }

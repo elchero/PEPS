@@ -219,4 +219,33 @@ public class VentasDAO {
             }
         }
     }
+
+    public Ventas obtenerVentaPorId(int idVenta) {
+        String sql = "SELECT v.*, p.nombre as nombre_producto "
+                + "FROM ventas v "
+                + "JOIN productos p ON v.id_producto = p.id_producto "
+                + "WHERE v.id_venta = ?";
+
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idVenta);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                Ventas venta = new Ventas();
+                venta.setId_venta(rs.getInt("id_venta"));
+                venta.setId_producto(rs.getInt("id_producto"));
+                venta.setId_lote(rs.getInt("id_lote"));
+                venta.setCantidad(rs.getInt("cantidad"));
+                venta.setPrecio_venta_unitario(rs.getDouble("precio_venta_unitario"));
+                venta.setFecha_venta(rs.getTimestamp("fecha_venta"));
+                venta.setNombre(rs.getString("nombre_producto"));
+                return venta;
+            } else {
+                throw new SQLException("No se encontró la venta con ID: " + idVenta);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener venta por ID: " + e.getMessage());
+            throw new RuntimeException("Error al obtener la venta", e);
+        }
+    }
 }

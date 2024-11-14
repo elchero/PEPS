@@ -293,6 +293,11 @@
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </form>
+                                        <a href="VentasServlet?action=generarBoleta&id=${venta.id_venta}" 
+                                           class="btn btn-success btn-sm ms-1"
+                                           data-tooltip="Generar Boleta">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
                                     </td>
                                 </tr>
                             </c:forEach>
