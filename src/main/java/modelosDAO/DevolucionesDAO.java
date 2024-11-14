@@ -21,111 +21,104 @@ public class DevolucionesDAO {
         this.con = conexion.getCon();
     }
 
-    public boolean registrarDevolucion(Devoluciones devolucion, String tipoDevolucion) {
+    public boolean registrarDevolucion(Devoluciones devolucion, String tipoDevolucion) throws SQLException {
         try {
             con.setAutoCommit(false);
 
-            // 1. Verificar si el lote existe y obtener información necesaria
-            String sqlVerificarLote = "SELECT l.costo_unitario, l.fecha_ingreso, li.cantidad_disponible, "
-                    + "(SELECT SUM(cantidad) FROM ventas WHERE id_lote = l.id_lote) as cantidad_vendida "
-                    + "FROM lotes l "
-                    + "JOIN lote_inventario li ON l.id_lote = li.id_lote "
-                    + "WHERE l.id_lote = ?";
+            // 1. Verificar el stock actual y la venta
+            String sqlVerificarVenta = "SELECT \n"
+                    + "                v.cantidad as cantidad_vendida,\n"
+                    + "                COALESCE((\n"
+                    + "                    SELECT SUM(d.cantidad)\n"
+                    + "                    FROM devoluciones d\n"
+                    + "                    WHERE d.id_lote = v.id_lote \n"
+                    + "                    AND d.id_producto = v.id_producto\n"
+                    + "                    AND d.tipo_devolucion IN ('venta', 'defectuoso')\n"
+                    + "                    AND d.fecha_devolucion >= v.fecha_venta\n"
+                    + "                ), 0) as cantidad_devuelta,\n"
+                    + "                l.costo_unitario,\n"
+                    + "                li.cantidad_disponible as stock_actual\n"
+                    + "            FROM ventas v\n"
+                    + "            JOIN lotes l ON v.id_lote = l.id_lote\n"
+                    + "            JOIN lote_inventario li ON l.id_lote = li.id_lote\n"
+                    + "            WHERE v.id_lote = ? AND v.id_producto = ?\n"
+                    + "            AND v.fecha_venta = (\n"
+                    + "                SELECT MIN(fecha_venta) \n"
+                    + "                FROM ventas \n"
+                    + "                WHERE id_lote = ? AND id_producto = ?\n"
+                    + "            )";
 
-            double costoUnitario = 0;
-            int cantidadDisponible = 0;
             int cantidadVendida = 0;
+            int cantidadDevuelta = 0;
+            double costoUnitario = 0;
+            int stockActual = 0;
 
-            try (PreparedStatement psLote = con.prepareStatement(sqlVerificarLote)) {
-                psLote.setInt(1, devolucion.getId_lote());
-                ResultSet rs = psLote.executeQuery();
-                if (rs.next()) {
-                    costoUnitario = rs.getDouble("costo_unitario");
-                    cantidadDisponible = rs.getInt("cantidad_disponible");
-                    cantidadVendida = rs.getInt("cantidad_vendida");
-                } else {
-                    throw new SQLException("Lote no encontrado");
+            try (PreparedStatement psVenta = con.prepareStatement(sqlVerificarVenta)) {
+                psVenta.setInt(1, devolucion.getId_lote());
+                psVenta.setInt(2, devolucion.getId_producto());
+                psVenta.setInt(3, devolucion.getId_lote());
+                psVenta.setInt(4, devolucion.getId_producto());
+
+                ResultSet rs = psVenta.executeQuery();
+                if (!rs.next()) {
+                    throw new SQLException("Venta no encontrada");
                 }
+
+                cantidadVendida = rs.getInt("cantidad_vendida");
+                cantidadDevuelta = rs.getInt("cantidad_devuelta");
+                costoUnitario = rs.getDouble("costo_unitario");
+                stockActual = rs.getInt("stock_actual");
             }
 
             // 2. Validar la cantidad a devolver
-            if (devolucion.getCantidad() > cantidadVendida) {
-                throw new SQLException("La cantidad a devolver es mayor que la cantidad vendida del lote");
+            int cantidadDisponibleParaDevolver = cantidadVendida - cantidadDevuelta;
+            if (devolucion.getCantidad() > cantidadDisponibleParaDevolver) {
+                throw new SQLException("La cantidad a devolver (" + devolucion.getCantidad()
+                        + ") excede la cantidad disponible para devolución (" + cantidadDisponibleParaDevolver + ")");
             }
 
-            // 3. Verificar si hay lotes más antiguos con ventas pendientes (PEPS)
-            String sqlVerificarPEPS = "SELECT COUNT(*) as lotes_antiguos "
-                    + "FROM lotes l "
-                    + "JOIN ventas v ON l.id_lote = v.id_lote "
-                    + "WHERE l.id_producto = ? "
-                    + "AND l.fecha_ingreso < (SELECT fecha_ingreso FROM lotes WHERE id_lote = ?) "
-                    + "AND NOT EXISTS (SELECT 1 FROM devoluciones d WHERE d.id_lote = l.id_lote)";
+            // 3. Registrar la devolución
+            String tipoDevolucionFinal = "defectuoso".equals(tipoDevolucion) ? "defectuoso" : "venta";
+            String sqlDevolucion = "INSERT INTO devoluciones (id_producto, id_lote, cantidad, tipo_devolucion, razon)\n"
+                    + "            VALUES (?, ?, ?, ?, ?)";
 
-            try (PreparedStatement psPEPS = con.prepareStatement(sqlVerificarPEPS)) {
-                psPEPS.setInt(1, devolucion.getId_producto());
-                psPEPS.setInt(2, devolucion.getId_lote());
-                ResultSet rs = psPEPS.executeQuery();
-                if (rs.next() && rs.getInt("lotes_antiguos") > 0) {
-                    throw new SQLException("Existen lotes más antiguos que deben ser devueltos primero (PEPS)");
-                }
-            }
-
-            // 4. Verificar si existen ventas más antiguas pendientes de devolución
-            String sqlVerificarDevolucionesPrevias
-                    = "SELECT COUNT(*) as devoluciones_pendientes "
-                    + "FROM ventas v "
-                    + "JOIN lotes l ON v.id_lote = l.id_lote "
-                    + "WHERE v.id_producto = ? "
-                    + "AND l.fecha_ingreso <= (SELECT fecha_ingreso FROM lotes WHERE id_lote = ?) "
-                    + "AND v.fecha_venta < (SELECT fecha_venta FROM ventas WHERE id_lote = ? AND cantidad = ?) "
-                    + "AND NOT EXISTS (SELECT 1 FROM devoluciones d WHERE d.id_lote = v.id_lote)";
-
-            try (PreparedStatement psVerificar = con.prepareStatement(sqlVerificarDevolucionesPrevias)) {
-                psVerificar.setInt(1, devolucion.getId_producto());
-                psVerificar.setInt(2, devolucion.getId_lote());
-                psVerificar.setInt(3, devolucion.getId_lote());
-                psVerificar.setInt(4, devolucion.getCantidad());
-                ResultSet rs = psVerificar.executeQuery();
-                if (rs.next() && rs.getInt("devoluciones_pendientes") > 0) {
-                    throw new SQLException("Existen ventas más antiguas que deben ser devueltas primero (PEPS)");
-                }
-            }
-
-            // 5. Registrar la devolución
-            String sqlDevolucion = "INSERT INTO devoluciones (id_producto, id_lote, cantidad, tipo_devolucion, razon) "
-                    + "VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement psDevolucion = con.prepareStatement(sqlDevolucion)) {
                 psDevolucion.setInt(1, devolucion.getId_producto());
                 psDevolucion.setInt(2, devolucion.getId_lote());
                 psDevolucion.setInt(3, devolucion.getCantidad());
-                psDevolucion.setString(4, tipoDevolucion.equals("defectuoso") ? "defectuoso" : "venta");
+                psDevolucion.setString(4, tipoDevolucionFinal);
                 psDevolucion.setString(5, devolucion.getRazon());
                 psDevolucion.executeUpdate();
             }
 
-            // 6. Actualizar inventario solo si no es defectuoso
+            // 4. Actualizar inventario si el producto no es defectuoso
             if (!"defectuoso".equals(tipoDevolucion)) {
-                String sqlActualizarInventario = "UPDATE lote_inventario "
-                        + "SET cantidad_disponible = cantidad_disponible + ? "
-                        + "WHERE id_lote = ?";
+                String sqlActualizarInventario = "UPDATE lote_inventario \n"
+                        + "                SET cantidad_disponible = cantidad_disponible + ?\n"
+                        + "                WHERE id_lote = ?";
+
                 try (PreparedStatement psInventario = con.prepareStatement(sqlActualizarInventario)) {
                     psInventario.setInt(1, devolucion.getCantidad());
                     psInventario.setInt(2, devolucion.getId_lote());
-                    psInventario.executeUpdate();
+                    int filasActualizadas = psInventario.executeUpdate();
+
+                    if (filasActualizadas == 0) {
+                        throw new SQLException("No se pudo actualizar el inventario");
+                    }
                 }
             }
 
-            // 7. Registrar movimiento de inventario
-            String sqlMovimiento = "INSERT INTO movimientos_inventario "
-                    + "(tipo_movimiento, id_producto, id_lote, cantidad, costo_unitario, iva) "
-                    + "VALUES (?, ?, ?, ?, ?, ?)";
+            // 5. Registrar movimiento de inventario
+            String sqlMovimiento = "  INSERT INTO movimientos_inventario \n"
+                    + "            (tipo_movimiento, id_producto, id_lote, cantidad, costo_unitario, iva)\n"
+                    + "            VALUES ('devolucion', ?, ?, ?, ?, ?)";
+
             try (PreparedStatement psMovimiento = con.prepareStatement(sqlMovimiento)) {
-                psMovimiento.setString(1, "devolucion");
-                psMovimiento.setInt(2, devolucion.getId_producto());
-                psMovimiento.setInt(3, devolucion.getId_lote());
-                psMovimiento.setInt(4, devolucion.getCantidad());
-                psMovimiento.setDouble(5, costoUnitario);
-                psMovimiento.setDouble(6, costoUnitario * 0.13);
+                psMovimiento.setInt(1, devolucion.getId_producto());
+                psMovimiento.setInt(2, devolucion.getId_lote());
+                psMovimiento.setInt(3, devolucion.getCantidad());
+                psMovimiento.setDouble(4, costoUnitario);
+                psMovimiento.setDouble(5, costoUnitario * 0.13);
                 psMovimiento.executeUpdate();
             }
 
@@ -138,8 +131,7 @@ public class DevolucionesDAO {
             } catch (SQLException ex) {
                 System.err.println("Error en rollback: " + ex.getMessage());
             }
-            System.err.println("Error al registrar devolución: " + e.getMessage());
-            return false;
+            throw e; // Relanzamos la excepción original
         } finally {
             try {
                 con.setAutoCommit(true);
@@ -149,113 +141,71 @@ public class DevolucionesDAO {
         }
     }
 
-    public List<Devoluciones> listarDevoluciones() {
-        List<Devoluciones> devoluciones = new ArrayList<>();
-        String sql = "SELECT d.*, p.nombre as nombre_producto "
-                + "FROM devoluciones d "
-                + "JOIN productos p ON d.id_producto = p.id_producto "
-                + "ORDER BY d.fecha_devolucion DESC";
-
-        try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                Devoluciones devolucion = new Devoluciones();
-                devolucion.setId_devolucion(rs.getInt("id_devolucion"));
-                devolucion.setId_producto(rs.getInt("id_producto"));
-                devolucion.setId_lote(rs.getInt("id_lote"));
-                devolucion.setCantidad(rs.getInt("cantidad"));
-                devolucion.setTipo_devolucion(rs.getString("tipo_devolucion"));
-                devolucion.setRazon(rs.getString("razon"));
-                devolucion.setFecha_devolucion(rs.getTimestamp("fecha_devolucion"));
-                devolucion.setNombre_producto(rs.getString("nombre_producto"));
-
-                // Como tipo_operacion no está en la base de datos, lo inferimos del tipo_devolucion
-                if (rs.getString("tipo_devolucion").equals("compra")) {
-                    devolucion.setTipo_operacion("compra");
-                } else {
-                    devolucion.setTipo_operacion("venta");
-                }
-
-                devoluciones.add(devolucion);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al listar devoluciones: " + e.getMessage());
-        }
-        return devoluciones;
-    }
-
     public List<VentaDevolucion> obtenerVentasParaDevolucion() {
         List<VentaDevolucion> ventas = new ArrayList<>();
-        String sql
-                = "SELECT v.id_venta, v.id_producto, v.id_lote, v.cantidad, "
-                + "v.fecha_venta, p.nombre as nombre_producto, "
-                + "COALESCE((SELECT SUM(d.cantidad) FROM devoluciones d "
-                + "WHERE d.id_lote = v.id_lote AND d.tipo_devolucion IN ('venta', 'defectuoso')), 0) as total_devuelto "
-                + "FROM ventas v "
-                + "JOIN productos p ON v.id_producto = p.id_producto "
-                + "JOIN lotes l ON v.id_lote = l.id_lote "
-                + "WHERE v.cantidad > "
-                + "(COALESCE((SELECT SUM(d.cantidad) FROM devoluciones d "
-                + "WHERE d.id_lote = v.id_lote AND d.tipo_devolucion IN ('venta', 'defectuoso')), 0)) "
-                + "ORDER BY l.fecha_ingreso ASC, v.fecha_venta ASC";
+        String sql = "WITH VentasConDevoluciones AS (\n"
+                + "            SELECT \n"
+                + "                v.id_venta,\n"
+                + "                v.id_producto,\n"
+                + "                v.id_lote,\n"
+                + "                v.cantidad as cantidad_original,\n"
+                + "                v.fecha_venta,\n"
+                + "                COALESCE(SUM(d.cantidad), 0) as cantidad_devuelta\n"
+                + "            FROM ventas v\n"
+                + "            LEFT JOIN devoluciones d ON v.id_lote = d.id_lote \n"
+                + "                AND v.id_producto = d.id_producto\n"
+                + "                AND d.tipo_devolucion IN ('venta', 'defectuoso')\n"
+                + "                AND d.fecha_devolucion >= v.fecha_venta\n"
+                + "            GROUP BY v.id_venta, v.id_producto, v.id_lote, v.cantidad, v.fecha_venta\n"
+                + "        )\n"
+                + "        SELECT \n"
+                + "            v.id_venta,\n"
+                + "            v.id_producto,\n"
+                + "            v.id_lote,\n"
+                + "            v.cantidad_original,\n"
+                + "            v.cantidad_devuelta,\n"
+                + "            (v.cantidad_original - v.cantidad_devuelta) as cantidad_disponible,\n"
+                + "            v.fecha_venta,\n"
+                + "            p.nombre as nombre_producto,\n"
+                + "            li.cantidad_disponible as stock_actual\n"
+                + "        FROM VentasConDevoluciones v\n"
+                + "        JOIN productos p ON v.id_producto = p.id_producto\n"
+                + "        JOIN lotes l ON v.id_lote = l.id_lote\n"
+                + "        JOIN lote_inventario li ON l.id_lote = li.id_lote\n"
+                + "        WHERE (v.cantidad_original - v.cantidad_devuelta) > 0\n"
+                + "        ORDER BY l.fecha_ingreso ASC, v.fecha_venta ASC";
 
         try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+
             while (rs.next()) {
                 VentaDevolucion venta = new VentaDevolucion();
                 venta.setId_venta(rs.getInt("id_venta"));
                 venta.setId_producto(rs.getInt("id_producto"));
                 venta.setId_lote(rs.getInt("id_lote"));
-                int cantidadOriginal = rs.getInt("cantidad");
-                int totalDevuelto = rs.getInt("total_devuelto");
-                venta.setCantidad(cantidadOriginal - totalDevuelto); // Cantidad disponible para devolución
+                venta.setCantidad_original(rs.getInt("cantidad_original"));
+                venta.setCantidad_disponible(rs.getInt("cantidad_disponible")); // Esta es la cantidad que aún se puede devolver
                 venta.setFecha_venta(rs.getTimestamp("fecha_venta"));
                 venta.setNombre_producto(rs.getString("nombre_producto"));
-
-                // Solo agregar si aún hay cantidad disponible para devolver
-                if (cantidadOriginal > totalDevuelto) {
-                    ventas.add(venta);
-                }
+                ventas.add(venta);
             }
         } catch (SQLException e) {
             System.err.println("Error al obtener ventas: " + e.getMessage());
+            throw new RuntimeException(e);
         }
         return ventas;
     }
 
-    // Método para verificar disponibilidad PEPS
-    private int verificarDisponibilidadPEPS(int idProducto, int cantidadRequerida) {
-        String sql = "SELECT l.id_lote, li.cantidad_disponible "
-                + "FROM lotes l "
-                + "JOIN lote_inventario li ON l.id_lote = li.id_lote "
-                + "WHERE l.id_producto = ? AND li.cantidad_disponible > 0 "
-                + "ORDER BY l.fecha_ingreso ASC";
-
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idProducto);
-            ResultSet rs = ps.executeQuery();
-
-            int cantidadDisponible = 0;
-            while (rs.next() && cantidadDisponible < cantidadRequerida) {
-                cantidadDisponible += rs.getInt("cantidad_disponible");
-            }
-            return cantidadDisponible;
-        } catch (SQLException e) {
-            System.err.println("Error al verificar disponibilidad: " + e.getMessage());
-            return 0;
-        }
-    }
-
-    //Devolucion sobre compra
     public List<CompraDevolucion> obtenerComprasParaDevolucion() {
         List<CompraDevolucion> compras = new ArrayList<>();
-        String sql = "SELECT c.id_compra, c.id_producto, c.id_lote, c.cantidad, "
+        String sql
+                = "SELECT c.id_compra, c.id_producto, c.id_lote, c.cantidad as cantidad_original, "
                 + "l.costo_unitario, l.fecha_ingreso, c.fecha_compra, p.nombre as nombre_producto, "
                 + "li.cantidad_disponible "
                 + "FROM compras c "
                 + "JOIN productos p ON c.id_producto = p.id_producto "
                 + "JOIN lotes l ON c.id_lote = l.id_lote "
                 + "JOIN lote_inventario li ON l.id_lote = li.id_lote "
-                + "WHERE li.cantidad_disponible > 0 "
-                + "ORDER BY l.fecha_ingreso ASC, c.fecha_compra ASC";  // PEPS: primero entrado
+                + "ORDER BY l.fecha_ingreso ASC, c.fecha_compra ASC";
 
         try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
@@ -263,7 +213,7 @@ public class DevolucionesDAO {
                 compra.setId_compra(rs.getInt("id_compra"));
                 compra.setId_producto(rs.getInt("id_producto"));
                 compra.setId_lote(rs.getInt("id_lote"));
-                compra.setCantidad(rs.getInt("cantidad"));
+                compra.setCantidad_original(rs.getInt("cantidad_original"));
                 compra.setCantidad_disponible(rs.getInt("cantidad_disponible"));
                 compra.setCosto_unitario(rs.getDouble("costo_unitario"));
                 compra.setFecha_compra(rs.getTimestamp("fecha_compra"));
@@ -459,5 +409,39 @@ public class DevolucionesDAO {
                 System.err.println("Error al restablecer autocommit: " + e.getMessage());
             }
         }
+    }
+
+    public List<Devoluciones> listarDevoluciones() {
+        List<Devoluciones> devoluciones = new ArrayList<>();
+        String sql = "SELECT d.*, p.nombre as nombre_producto "
+                + "FROM devoluciones d "
+                + "JOIN productos p ON d.id_producto = p.id_producto "
+                + "ORDER BY d.fecha_devolucion DESC";
+
+        try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                Devoluciones devolucion = new Devoluciones();
+                devolucion.setId_devolucion(rs.getInt("id_devolucion"));
+                devolucion.setId_producto(rs.getInt("id_producto"));
+                devolucion.setId_lote(rs.getInt("id_lote"));
+                devolucion.setCantidad(rs.getInt("cantidad"));
+                devolucion.setTipo_devolucion(rs.getString("tipo_devolucion"));
+                devolucion.setRazon(rs.getString("razon"));
+                devolucion.setFecha_devolucion(rs.getTimestamp("fecha_devolucion"));
+                devolucion.setNombre_producto(rs.getString("nombre_producto"));
+
+                // Como tipo_operacion no está en la base de datos, lo inferimos del tipo_devolucion
+                if (rs.getString("tipo_devolucion").equals("compra")) {
+                    devolucion.setTipo_operacion("compra");
+                } else {
+                    devolucion.setTipo_operacion("venta");
+                }
+
+                devoluciones.add(devolucion);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al listar devoluciones: " + e.getMessage());
+        }
+        return devoluciones;
     }
 }

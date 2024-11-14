@@ -161,7 +161,7 @@ public class DevolucionesServlet extends HttpServlet {
         }
 
         // Guardar mensaje y tipo en la sesión
-        request.getSession().setAttribute("mensaje", mensaje);
+            request.getSession().setAttribute("mensaje", mensaje);
         request.getSession().setAttribute("tipoMensaje", tipoMensaje);
 
         // Redireccionar a GET

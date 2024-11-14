@@ -13,6 +13,7 @@ public class VentaDevolucion {
     private int cantidad;
     private Timestamp fecha_venta;
     private String nombre_producto;
+    private int cantidad_original, cantidad_disponible, total_devuelto;
 
     public int getId_venta() {
         return id_venta;
@@ -60,6 +61,30 @@ public class VentaDevolucion {
 
     public void setNombre_producto(String nombre_producto) {
         this.nombre_producto = nombre_producto;
+    }
+
+    public int getCantidad_original() {
+        return cantidad_original;
+    }
+
+    public void setCantidad_original(int cantidad_original) {
+        this.cantidad_original = cantidad_original;
+    }
+
+    public int getCantidad_disponible() {
+        return cantidad_disponible;
+    }
+
+    public void setCantidad_disponible(int cantidad_disponible) {
+        this.cantidad_disponible = cantidad_disponible;
+    }
+
+    public int getTotal_devuelto() {
+        return total_devuelto;
+    }
+
+    public void setTotal_devuelto(int total_devuelto) {
+        this.total_devuelto = total_devuelto;
     }
 
     

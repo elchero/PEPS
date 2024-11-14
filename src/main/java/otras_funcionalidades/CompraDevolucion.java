@@ -12,6 +12,7 @@ public class CompraDevolucion {
     private double costo_unitario;
     private Timestamp fecha_compra;
     private String nombre_producto;
+    private int cantidad_original;
 
     public int getId_compra() {
         return id_compra;
@@ -75,6 +76,14 @@ public class CompraDevolucion {
 
     public void setNombre_producto(String nombre_producto) {
         this.nombre_producto = nombre_producto;
+    }
+
+    public int getCantidad_original() {
+        return cantidad_original;
+    }
+
+    public void setCantidad_original(int cantidad_original) {
+        this.cantidad_original = cantidad_original;
     }
 
     

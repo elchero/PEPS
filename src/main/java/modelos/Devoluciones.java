@@ -9,6 +9,7 @@ public class Devoluciones {
     private Timestamp fecha_devolucion;
     private String nombre_producto; 
     private String tipo_operacion;//Va fuuera de la bd es para otra funcionalidad
+    private int id_venta;
 
     public Devoluciones() {
     }
@@ -102,6 +103,14 @@ public class Devoluciones {
 
     public void setTipo_operacion(String tipo_operacion) {
         this.tipo_operacion = tipo_operacion;
+    }
+
+    public int getId_venta() {
+        return id_venta;
+    }
+
+    public void setId_venta(int id_venta) {
+        this.id_venta = id_venta;
     }
     
 }
