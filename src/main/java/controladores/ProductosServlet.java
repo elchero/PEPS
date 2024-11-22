@@ -61,20 +61,17 @@ public class ProductosServlet extends HttpServlet {
             action = "listar";
         }
 
-        switch (action) {
-            case "listar":
-                listarProductos(request, response);
-                break;
-            case "obtener":
-                obtenerProducto(request, response);
-                break;
-            case "desactivar":
-                desactivarProducto(request, response);
-                break;
-            default:
+            switch (action) {
+                case "listar":
+                    listarProductos(request, response);
+                    break;
+                case "obtener":
+                    obtenerProducto(request, response);
+                    break;
+                default:
                 response.sendRedirect("index.jsp");
+            }
         }
-    }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -92,10 +89,10 @@ public class ProductosServlet extends HttpServlet {
 
     private void listarProductos(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        List<Productos> listaProductos = productosDAO.listarProductos();
-        request.setAttribute("listaProductos", listaProductos);
+            List<Productos> listaProductos = productosDAO.listarProductos();
+            request.setAttribute("listaProductos", listaProductos);
         request.getRequestDispatcher("/Vistas/productos.jsp").forward(request, response);
-    }
+            }
 
     private void agregarProducto(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -135,40 +132,40 @@ public class ProductosServlet extends HttpServlet {
     }
 
     private void obtenerProducto(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    response.setContentType("application/json");
-    response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
 
-    try {
-        // Obtener el parámetro ID del producto
-        String idParam = request.getParameter("id_producto");
-        if (idParam == null || idParam.trim().isEmpty()) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID de producto es requerido");
-            return;
-        }
-
-        // Convertir el parámetro a un número
-        int id_producto = Integer.parseInt(idParam);
-        // Obtener el producto desde el DAO
-        Productos producto = productosDAO.obtenerProducto(id_producto);
-
-        try (PrintWriter out = response.getWriter()) {
-            if (producto != null) {
-                // Convertir el objeto producto a JSON y escribirlo en la respuesta
-                Gson gson = new Gson();
-                out.print(gson.toJson(producto));
-            } else {
-                // En caso de no encontrar el producto
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Producto no encontrado");
+        try {
+            // Obtener el parámetro ID del producto
+            String idParam = request.getParameter("id_producto");
+            if (idParam == null || idParam.trim().isEmpty()) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID de producto es requerido");
+                return;
             }
+
+            // Convertir el parámetro a un número
+            int id_producto = Integer.parseInt(idParam);
+            // Obtener el producto desde el DAO
+            Productos producto = productosDAO.obtenerProducto(id_producto);
+
+            try (PrintWriter out = response.getWriter()) {
+                if (producto != null) {
+                    // Convertir el objeto producto a JSON y escribirlo en la respuesta
+                    Gson gson = new Gson();
+                    out.print(gson.toJson(producto));
+                } else {
+                    // En caso de no encontrar el producto
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Producto no encontrado");
+                }
+            }
+        } catch (NumberFormatException e) {
+            // Manejar el caso donde el ID no es un número válido
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID de producto inválido");
+        } catch (Exception e) {
+            // Manejo de excepciones generales (puedes registrar esto también)
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error en el servidor");
         }
-    } catch (NumberFormatException e) {
-        // Manejar el caso donde el ID no es un número válido
-        response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID de producto inválido");
-    } catch (Exception e) {
-        // Manejo de excepciones generales (puedes registrar esto también)
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error en el servidor");
     }
-}
     private void editarProducto(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         int id_producto = Integer.parseInt(request.getParameter("id_producto"));
@@ -176,7 +173,7 @@ public class ProductosServlet extends HttpServlet {
         String descripcion = request.getParameter("descripcion");
         String proveedor = request.getParameter("proveedor");
         double precio = Double.parseDouble(request.getParameter("precio"));
-       // String estado = request.getParameter("estado");
+        // String estado = request.getParameter("estado");
 
         Productos producto = new Productos(id_producto, nombre, descripcion, proveedor, precio);
         boolean resultado = productosDAO.actualizarProducto(producto);
@@ -186,17 +183,6 @@ public class ProductosServlet extends HttpServlet {
         } else {
             request.setAttribute("errorMessage", "Error al actualizar producto.");
             request.getRequestDispatcher("productos.jsp").forward(request, response);
-        }
-    }
-
-    private void desactivarProducto(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        int idProducto = Integer.parseInt(request.getParameter("id"));
-        boolean resultado = productosDAO.desactivarProducto(idProducto);
-        if (resultado) {
-            response.sendRedirect("ProductosServlet?action=listar");
-        } else {
-            response.getWriter().println("Error al desactivar producto");
         }
     }
 

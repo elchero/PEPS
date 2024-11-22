@@ -40,7 +40,7 @@ public class InventarioInicialDAO {
             try (PreparedStatement psLote = con.prepareStatement(sqlLote, Statement.RETURN_GENERATED_KEYS)) {
                 psLote.setInt(1, lote.getId_producto());
                 psLote.setDouble(2, lote.getCosto_unitario());
-                psLote.setTimestamp(3, lote.getFecha_ingreso());
+                psLote.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
                 psLote.executeUpdate();
 
                 ResultSet rsLote = psLote.getGeneratedKeys();
@@ -60,7 +60,7 @@ public class InventarioInicialDAO {
                 psCompra.setInt(2, compra.getId_lote());
                 psCompra.setInt(3, compra.getCantidad());
                 psCompra.setDouble(4, costoTotal);
-                psCompra.setTimestamp(5, compra.getFecha_compra());
+                psCompra.setTimestamp(5, new Timestamp(System.currentTimeMillis()));
                 psCompra.executeUpdate();
             }
 
